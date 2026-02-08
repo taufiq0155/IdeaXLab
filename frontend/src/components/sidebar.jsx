@@ -3,62 +3,61 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   FiHome, 
   FiUsers, 
-  FiBarChart2, 
-  FiSettings, 
-  FiChevronLeft, 
-  FiChevronRight,
+  FiChevronLeft,
   FiLogOut,
   FiUser,
-  FiDatabase,
-  FiFileText,
-  FiBell,
-  FiMessageSquare,
-  FiArchive,
   FiX,
-  FiMenu
+  FiMenu,
+  FiUserCheck,
+  FiUserPlus,
+  FiChevronDown
 } from 'react-icons/fi';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 // Logo import
-import researchLabLogo from '../../../assets/researchLab.jpeg';
-
-
+import researchLabLogo from '../assets/researchLab.jpeg';
 
 export default function Sidebar({ 
-  activeTab, 
-  setActiveTab, 
   isSidebarOpen, 
   setIsSidebarOpen,
   isMobile 
 }) {
-  const navItems = [
-    { name: 'Dashboard', icon: <FiHome />, tab: 'overview' },
-    { name: 'User Management', icon: <FiUsers />, tab: 'users' },
-    { name: 'Analytics', icon: <FiBarChart2 />, tab: 'analytics' },
-    { name: 'Reports', icon: <FiFileText />, tab: 'reports' },
-    { name: 'Messages', icon: <FiMessageSquare />, tab: 'messages' },
-    { name: 'Notifications', icon: <FiBell />, tab: 'notifications' },
-    { name: 'Database', icon: <FiDatabase />, tab: 'database' },
-    { name: 'Archive', icon: <FiArchive />, tab: 'archive' },
-    { name: 'Settings', icon: <FiSettings />, tab: 'settings' },
-  ];
+  const [admin, setAdmin] = useState(null);
+  const [showAdminSubmenu, setShowAdminSubmenu] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
 
-  const handleItemClick = (tab) => {
-    setActiveTab(tab);
-    if (isMobile) {
-      setIsSidebarOpen(false);
+  // Load logged-in admin details from localStorage
+  useEffect(() => {
+    const storedAdmin = localStorage.getItem('adminData');
+    if (storedAdmin) {
+      try {
+        setAdmin(JSON.parse(storedAdmin));
+      } catch (error) {
+        console.error('Error parsing admin data:', error);
+        setAdmin(null);
+      }
     }
-  };
+  }, []);
 
   const handleLogout = () => {
-    console.log('Logout clicked');
-    // Add your logout logic here
+    // Remove token and admin data from localStorage
+    localStorage.removeItem('adminToken');
+    localStorage.removeItem('adminData');
+    
+    // Redirect to login page
+    navigate('/admin/login');
   };
 
   const handleToggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
   };
 
-  const logoToUse = researchLabLogo ;
+  const logoToUse = researchLabLogo;
+
+  // Check if current route is active
+  const isDashboardActive = location.pathname === '/admin/dashboard';
+  const isAdminsActive = location.pathname.includes('/admin/admins');
 
   return (
     <>
@@ -109,7 +108,6 @@ export default function Sidebar({
                         className="w-full h-full object-cover"
                         onError={(e) => {
                           e.target.onerror = null;
-                          
                         }}
                       />
                     </div>
@@ -127,29 +125,25 @@ export default function Sidebar({
 
                 {/* Close Button - Desktop only */}
                 {!isMobile && (
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
+                  <button
                     onClick={handleToggleSidebar}
                     className="w-10 h-10 rounded-xl bg-black/60 backdrop-blur-md border border-gray-800/70 flex items-center justify-center text-gray-300 hover:text-white hover:border-blue-600/50 transition-all duration-300 hover:scale-105 shadow-lg"
                   >
                     <FiChevronLeft className="w-5 h-5" />
-                  </motion.button>
+                  </button>
                 )}
               </>
             ) : (
               /* When sidebar is CLOSED */
               <>
-                {/* 3-line Menu Button - Positioned at the top */}
+                {/* 3-line Menu Button - Positioned at the top (DESKTOP ONLY) */}
                 {!isMobile && (
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
+                  <button
                     onClick={handleToggleSidebar}
                     className="w-10 h-10 rounded-xl bg-black/60 backdrop-blur-md border border-gray-800/70 flex items-center justify-center text-gray-300 hover:text-white hover:border-blue-600/50 transition-all duration-300 mb-3 shadow-lg"
                   >
                     <FiMenu className="w-5 h-5" />
-                  </motion.button>
+                  </button>
                 )}
 
                 {/* Logo */}
@@ -162,7 +156,6 @@ export default function Sidebar({
                       className="w-full h-full object-cover"
                       onError={(e) => {
                         e.target.onerror = null;
-                       
                       }}
                     />
                   </div>
@@ -185,50 +178,118 @@ export default function Sidebar({
         {/* Navigation */}
         <nav className="flex-1 overflow-y-auto py-6">
           <ul className="space-y-1.5 px-4">
-            {navItems.map((item) => {
-              const isActive = activeTab === item.tab;
-              
-              return (
-                <li key={item.tab}>
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => handleItemClick(item.tab)}
+            {/* Dashboard */}
+            <li>
+              <button
+                onClick={() => {
+                  navigate('/admin/dashboard');
+                  if (isMobile) setIsSidebarOpen(false);
+                }}
+                className={`flex items-center w-full rounded-xl transition-all duration-300 group ${
+                  isSidebarOpen ? 'px-4 py-3' : 'p-3 justify-center'
+                } ${
+                  isDashboardActive
+                    ? 'bg-gradient-to-r from-blue-600/30 to-cyan-600/20 text-white shadow-lg shadow-blue-500/10'
+                    : 'text-gray-400 hover:text-white hover:bg-gray-800/30'
+                }`}
+              >
+                <div className={`flex items-center ${isSidebarOpen ? 'space-x-4' : 'justify-center'}`}>
+                  <span className={`flex items-center justify-center w-5 h-5 ${
+                    isDashboardActive 
+                      ? 'text-blue-400' 
+                      : 'text-gray-400 group-hover:text-blue-300'
+                  } transition-transform duration-200`}>
+                    <FiHome />
+                  </span>
+                  {isSidebarOpen && (
+                    <span className="text-sm font-medium tracking-wide whitespace-nowrap">
+                      Dashboard
+                    </span>
+                  )}
+                </div>
+              </button>
+            </li>
+
+            {/* Admins (only for superAdmin) */}
+            {admin?.role === "superAdmin" && (
+              <li>
+                <div>
+                  <button
+                    onClick={() => {
+                      setShowAdminSubmenu(!showAdminSubmenu);
+                      // If clicking admin for first time, navigate to all admins
+                      if (!showAdminSubmenu) {
+                        navigate('/admin/admins/all');
+                      }
+                    }}
                     className={`flex items-center w-full rounded-xl transition-all duration-300 group ${
                       isSidebarOpen ? 'px-4 py-3' : 'p-3 justify-center'
                     } ${
-                      isActive
+                      isAdminsActive
                         ? 'bg-gradient-to-r from-blue-600/30 to-cyan-600/20 text-white shadow-lg shadow-blue-500/10'
                         : 'text-gray-400 hover:text-white hover:bg-gray-800/30'
                     }`}
                   >
                     <div className={`flex items-center ${isSidebarOpen ? 'space-x-4' : 'justify-center'}`}>
                       <span className={`flex items-center justify-center w-5 h-5 ${
-                        isActive 
+                        isAdminsActive 
                           ? 'text-blue-400' 
                           : 'text-gray-400 group-hover:text-blue-300'
                       } transition-transform duration-200`}>
-                        {item.icon}
+                        <FiUsers />
                       </span>
                       {isSidebarOpen && (
-                        <motion.span
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          className="text-sm font-medium tracking-wide whitespace-nowrap"
-                        >
-                          {item.name}
-                        </motion.span>
+                        <span className="text-sm font-medium tracking-wide whitespace-nowrap">
+                          Admins
+                        </span>
                       )}
                     </div>
-                    {isSidebarOpen && isActive && (
-                      <div className="ml-auto">
-                        <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></div>
-                      </div>
+                    {isSidebarOpen && (
+                      <FiChevronDown className={`ml-auto transition-transform duration-300 ${showAdminSubmenu ? 'rotate-180' : ''}`} />
                     )}
-                  </motion.button>
-                </li>
-              );
-            })}
+                  </button>
+
+                  {/* Submenu for Admin section */}
+                  {isSidebarOpen && showAdminSubmenu && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="ml-12 mt-1 space-y-1"
+                    >
+                      <button
+                        onClick={() => {
+                          navigate('/admin/admins/all');
+                          if (isMobile) setIsSidebarOpen(false);
+                        }}
+                        className={`flex items-center space-x-2 w-full px-3 py-2 rounded-lg text-sm transition-colors text-left ${
+                          location.pathname === '/admin/admins/all'
+                            ? 'text-blue-400 bg-blue-900/20'
+                            : 'text-gray-400 hover:text-white hover:bg-gray-800/30'
+                        }`}
+                      >
+                        <FiUserCheck />
+                        <span>All Admins</span>
+                      </button>
+                      <button
+                        onClick={() => {
+                          navigate('/admin/admins/pending');
+                          if (isMobile) setIsSidebarOpen(false);
+                        }}
+                        className={`flex items-center space-x-2 w-full px-3 py-2 rounded-lg text-sm transition-colors text-left ${
+                          location.pathname === '/admin/admins/pending'
+                            ? 'text-blue-400 bg-blue-900/20'
+                            : 'text-gray-400 hover:text-white hover:bg-gray-800/30'
+                        }`}
+                      >
+                        <FiUserPlus />
+                        <span>Pending Admins</span>
+                      </button>
+                    </motion.div>
+                  )}
+                </div>
+              </li>
+            )}
           </ul>
 
           {/* Admin Status Card */}
@@ -241,11 +302,13 @@ export default function Sidebar({
               <div className="flex items-center gap-2 mb-3">
                 <div className="w-2 h-2 bg-blue-500 rounded-full animate-ping"></div>
                 <span className="text-blue-400 text-sm font-semibold tracking-wide">
-                  ADMIN PRIVILEGES
+                  {admin?.role === 'superAdmin' ? 'SUPER ADMIN' : 'ADMIN PRIVILEGES'}
                 </span>
               </div>
               <p className="text-gray-300 text-xs leading-relaxed">
-                Full system access with elevated permissions and security controls.
+                {admin?.role === 'superAdmin' 
+                  ? 'Full system access with elevated permissions and security controls.' 
+                  : 'Administrative access with limited permissions.'}
               </p>
             </motion.div>
           )}
@@ -254,10 +317,7 @@ export default function Sidebar({
         {/* Footer - User Profile */}
         <div className={`border-t border-blue-900/30 ${isSidebarOpen ? 'p-4' : 'p-4'}`}>
           <div className={`flex items-center ${isSidebarOpen ? 'justify-start' : 'justify-center'}`}>
-            <motion.div
-              whileHover={isSidebarOpen ? { scale: 1.02 } : {}}
-              className={`relative ${isSidebarOpen ? 'flex items-center w-full' : ''}`}
-            >
+            <div className={`relative ${isSidebarOpen ? 'flex items-center w-full' : ''}`}>
               {/* User Avatar */}
               <div className={`relative ${isSidebarOpen ? '' : 'mx-auto'}`}>
                 <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-cyan-600 blur-md rounded-full opacity-40"></div>
@@ -268,33 +328,27 @@ export default function Sidebar({
 
               {/* User Info - Only shown when sidebar is open */}
               {isSidebarOpen && (
-                <motion.div
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  className="flex-1 min-w-0 ml-4"
-                >
+                <div className="flex-1 min-w-0 ml-4">
                   <div className="flex items-center justify-between">
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-bold text-white truncate">
-                        Admin User
+                        {admin?.fullName || 'Admin User'}
                       </p>
                       <p className="text-xs text-blue-300 font-medium truncate mt-0.5">
-                        admin@gmail.com
+                        {admin?.email || 'admin@gmail.com'}
                       </p>
                     </div>
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
+                    <button
                       onClick={handleLogout}
-                      className="ml-3 p-2 rounded-lg hover:bg-red-900/30 transition-colors duration-300 flex-shrink-0"
+                      className="ml-3 p-2 rounded-lg hover:bg-red-900/30 transition-colors duration-300 flex-shrink-0 group"
                       title="Logout"
                     >
-                      <FiLogOut className="w-4 h-4 text-gray-400 hover:text-red-400" />
-                    </motion.button>
+                      <FiLogOut className="w-4 h-4 text-gray-400 group-hover:text-red-400 transition-colors duration-300" />
+                    </button>
                   </div>
-                </motion.div>
+                </div>
               )}
-            </motion.div>
+            </div>
           </div>
         </div>
       </motion.aside>

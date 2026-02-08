@@ -7,6 +7,11 @@ import AdminSignup from './pages/admin/adminsignup'
 import AdminDashboard from './pages/admin/adminDashboard'
 import ForgotPassword from './pages/admin/forgotPassword'
 import { ThemeProvider } from './context/ThemeContext'
+import AdminLayout from './layouts/AdminLayout'
+import ProtectedRoute from './components/ProtectedRoute'
+import AllAdmins from './pages/admin/Admins/alladmins'
+import PendingAdmins from './pages/admin/Admins/pendingAdmins'
+import ChangePassword from './pages/admin/changePassword'
 
 function App() {
   return (
@@ -29,11 +34,31 @@ function App() {
           />
           
           <Routes>
+            {/* Public Routes */}
             <Route path="/" element={<Home />} />
             <Route path="/admin/login" element={<AdminLogin />} />
             <Route path="/admin/signup" element={<AdminSignup />} />
-            <Route path="/admin/dashboard" element={<AdminDashboard />} />
             <Route path="/admin/forgot-password" element={<ForgotPassword />} />
+            
+            {/* Protected Admin Routes */}
+            <Route path="/admin" element={
+              <ProtectedRoute>
+                <AdminLayout />
+              </ProtectedRoute>
+            }>
+              <Route index element={<Navigate to="/admin/dashboard" replace />} />
+              <Route path="dashboard" element={<AdminDashboard />} />
+
+              <Route path="change-password" element={<ChangePassword />} />
+              
+              {/* Admin Management Routes */}
+              <Route path="admins">
+                <Route path="all" element={<AllAdmins />} />
+                <Route path="pending" element={<PendingAdmins />} />
+              </Route>
+            </Route>
+            
+            {/* Redirect all unknown routes */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </div>

@@ -1,267 +1,30 @@
-// Home.jsx (updated)
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   FaUser, FaBars, FaTimes, FaChevronDown, 
-  FaSearch, FaEnvelope, FaPhone, FaCaretRight,
+  FaEnvelope, FaPhone, FaCaretRight,
   FaSun, FaMoon
 } from 'react-icons/fa';
-import { useTheme } from '../context/ThemeContext'; // Add this import
+import { useTheme } from '../context/ThemeContext';
 import researchLabLogo from '../assets/researchLab.jpeg';
 import Footer from './footer';
+import AnimatedCanvas from '../components/animations/animatedCanvas';
+import GlassCard from '../components/ui/GlassCard';
+import StatsCard from '../components/ui/StatsCard';
 
 export default function Home() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const canvasRef = useRef(null);
-  const { theme, toggleTheme } = useTheme(); // Get theme and toggle function
+  const { theme, toggleTheme } = useTheme();
 
-  // Update background color based on theme
+  // Scroll effect for navbar
   useEffect(() => {
-    const updateCanvasBackground = () => {
-      if (!canvasRef.current) return;
-      const canvas = canvasRef.current;
-      const ctx = canvas.getContext('2d');
-      
-      // Clear and set background based on theme
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.fillStyle = theme === 'dark' ? '#000000' : '#ffffff';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 50);
     };
-    
-    updateCanvasBackground();
-  }, [theme]);
-
-  // Add theme-aware styles to your particle system
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const ctx = canvas.getContext('2d');
-    const dpr = window.devicePixelRatio || 1;
-    
-    const resizeCanvas = () => {
-      const width = window.innerWidth;
-      const height = window.innerHeight;
-      canvas.width = width * dpr;
-      canvas.height = height * dpr;
-      ctx.scale(dpr, dpr);
-      canvas.style.width = `${width}px`;
-      canvas.style.height = `${height}px`;
-    };
-
-    resizeCanvas();
-
-    class Particle {
-      constructor() {
-        this.reset();
-        this.x = Math.random() * canvas.width / dpr;
-        this.y = Math.random() * canvas.height / dpr;
-      }
-      
-      reset() {
-        this.x = Math.random() * canvas.width / dpr;
-        this.y = Math.random() * canvas.height / dpr;
-        this.size = Math.random() * 2 + 0.5;
-        this.speedX = Math.random() * 0.5 - 0.25;
-        this.speedY = Math.random() * 0.5 - 0.25;
-        // Update colors based on theme
-        this.color = theme === 'dark' 
-          ? (Math.random() > 0.7 ? '#60a5fa' : '#3b82f6')
-          : (Math.random() > 0.7 ? '#1d4ed8' : '#3b82f6');
-        this.opacity = Math.random() * 0.3 + 0.1;
-        this.wander = 0;
-      }
-      
-      update() {
-        this.x += this.speedX;
-        this.y += this.speedY;
-        
-        this.wander += 0.01;
-        this.x += Math.sin(this.wander) * 0.2;
-        this.y += Math.cos(this.wander) * 0.2;
-        
-        if (this.x < -20 || this.x > canvas.width / dpr + 20 || 
-            this.y < -20 || this.y > canvas.height / dpr + 20) {
-          this.reset();
-        }
-      }
-      
-      draw() {
-        ctx.beginPath();
-        ctx.fillStyle = this.color;
-        ctx.globalAlpha = this.opacity;
-        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.globalAlpha = 1;
-      }
-    }
-
-    class GeometricCircle {
-      constructor() {
-        this.x = Math.random() * canvas.width / dpr;
-        this.y = Math.random() * canvas.height / dpr;
-        this.radius = Math.random() * 60 + 40;
-        this.rotation = Math.random() * Math.PI * 2;
-        this.rotationSpeed = Math.random() * 0.002 - 0.001;
-        this.segments = Math.floor(Math.random() * 8) + 6;
-        this.pulse = Math.random() * Math.PI * 2;
-        this.pulseSpeed = Math.random() * 0.01 + 0.005;
-        // Theme-aware colors
-        this.color = theme === 'dark'
-          ? (Math.random() > 0.5 ? 'rgba(59, 130, 246, 0.05)' : 'rgba(30, 64, 175, 0.08)')
-          : (Math.random() > 0.5 ? 'rgba(37, 99, 235, 0.1)' : 'rgba(30, 64, 175, 0.15)');
-      }
-      
-      update() {
-        this.rotation += this.rotationSpeed;
-        this.pulse += this.pulseSpeed;
-        const pulseEffect = Math.sin(this.pulse) * 0.2 + 0.8;
-        this.currentRadius = this.radius * pulseEffect;
-      }
-      
-      draw() {
-        ctx.save();
-        ctx.translate(this.x, this.y);
-        ctx.rotate(this.rotation);
-        
-        ctx.beginPath();
-        ctx.strokeStyle = this.color;
-        ctx.lineWidth = 1;
-        
-        const segmentAngle = (Math.PI * 2) / this.segments;
-        
-        for (let i = 0; i < this.segments; i++) {
-          const angle1 = i * segmentAngle;
-          const angle2 = (i + 1) % this.segments * segmentAngle;
-          
-          const x1 = Math.cos(angle1) * this.currentRadius;
-          const y1 = Math.sin(angle1) * this.currentRadius;
-          const x2 = Math.cos(angle2) * this.currentRadius;
-          const y2 = Math.sin(angle2) * this.currentRadius;
-          
-          ctx.moveTo(0, 0);
-          ctx.lineTo(x1, y1);
-          ctx.moveTo(x1, y1);
-          ctx.lineTo(x2, y2);
-        }
-        
-        ctx.moveTo(this.currentRadius, 0);
-        for (let i = 0; i <= this.segments; i++) {
-          const angle = i * segmentAngle;
-          const x = Math.cos(angle) * this.currentRadius;
-          const y = Math.sin(angle) * this.currentRadius;
-          ctx.lineTo(x, y);
-        }
-        
-        ctx.stroke();
-        ctx.restore();
-      }
-    }
-
-    class ConnectionLine {
-      constructor(particle1, particle2) {
-        this.p1 = particle1;
-        this.p2 = particle2;
-        this.opacity = 0;
-      }
-      
-      update() {
-        const dx = this.p1.x - this.p2.x;
-        const dy = this.p1.y - this.p2.y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-        
-        if (distance < 80) {
-          this.opacity = Math.min(this.opacity + 0.02, 0.2 * (1 - distance / 80));
-        } else {
-          this.opacity = Math.max(this.opacity - 0.02, 0);
-        }
-      }
-      
-      draw() {
-        if (this.opacity > 0.01) {
-          const lineColor = theme === 'dark' 
-            ? `rgba(96, 165, 250, ${this.opacity})`
-            : `rgba(37, 99, 235, ${this.opacity})`;
-          
-          ctx.beginPath();
-          ctx.strokeStyle = lineColor;
-          ctx.lineWidth = 0.5;
-          ctx.moveTo(this.p1.x, this.p1.y);
-          ctx.lineTo(this.p2.x, this.p2.y);
-          ctx.stroke();
-        }
-      }
-    }
-
-    // Initialize
-    const particles = Array.from({ length: 150 }, () => new Particle());
-    const circles = Array.from({ length: 12 }, () => new GeometricCircle());
-    const connections = [];
-    
-    for (let i = 0; i < particles.length; i++) {
-      for (let j = i + 1; j < particles.length; j++) {
-        connections.push(new ConnectionLine(particles[i], particles[j]));
-      }
-    }
-
-    let animationId;
-    
-    const animate = () => {
-      // Set background based on theme
-      ctx.fillStyle = theme === 'dark' ? '#000000' : '#ffffff';
-      ctx.fillRect(0, 0, canvas.width / dpr, canvas.height / dpr);
-      
-      circles.forEach(circle => {
-        circle.update();
-        circle.draw();
-      });
-      
-      particles.forEach(particle => {
-        particle.update();
-        particle.draw();
-      });
-      
-      connections.forEach(connection => {
-        connection.update();
-        connection.draw();
-      });
-      
-      // Theme-aware gradient
-      const centerX = canvas.width / dpr / 2;
-      const centerY = canvas.height / dpr / 2;
-      const gradient = ctx.createRadialGradient(
-        centerX, centerY, 0,
-        centerX, centerY, 400
-      );
-      
-      if (theme === 'dark') {
-        gradient.addColorStop(0, 'rgba(30, 64, 175, 0.15)');
-        gradient.addColorStop(1, 'rgba(30, 64, 175, 0)');
-      } else {
-        gradient.addColorStop(0, 'rgba(59, 130, 246, 0.1)');
-        gradient.addColorStop(1, 'rgba(59, 130, 246, 0)');
-      }
-      
-      ctx.fillStyle = gradient;
-      ctx.fillRect(0, 0, canvas.width / dpr, canvas.height / dpr);
-      
-      animationId = requestAnimationFrame(animate);
-    };
-
-    animate();
-
-    const handleResize = () => {
-      resizeCanvas();
-    };
-
-    window.addEventListener('resize', handleResize);
-
-    return () => {
-      cancelAnimationFrame(animationId);
-      window.removeEventListener('resize', handleResize);
-    };
-  }, [theme]); // Add theme as dependency
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const menuItems = [
     'Home',
@@ -274,16 +37,39 @@ export default function Home() {
     'Team',
     'Contact',
     'Blog',
-   
+  ];
+
+  const stats = [
+    { 
+      number: '50+', 
+      label: 'Research Papers', 
+      color: 'blue',
+      gradient: 'from-blue-600/20 to-blue-800/10'
+    },
+    { 
+      number: '25+', 
+      label: 'AI Projects', 
+      color: 'cyan',
+      gradient: 'from-cyan-600/20 to-blue-700/10'
+    },
+    { 
+      number: '15+', 
+      label: 'Industry Partners', 
+      color: 'purple',
+      gradient: 'from-purple-600/20 to-purple-800/10'
+    },
+    { 
+      number: '8+', 
+      label: 'Years of Research', 
+      color: 'violet',
+      gradient: 'from-violet-600/20 to-violet-800/10'
+    }
   ];
 
   return (
     <div className={`min-h-screen relative overflow-hidden ${theme === 'dark' ? 'bg-black' : 'bg-gray-50'}`}>
-      {/* Canvas for animated background */}
-      <canvas
-        ref={canvasRef}
-        className="fixed inset-0 w-full h-full pointer-events-none"
-      />
+      {/* Animated Canvas Background */}
+      <AnimatedCanvas theme={theme} />
 
       {/* Header background overlay */}
       <div className={`fixed inset-0 h-32 z-30 pointer-events-none transition-all duration-500 ${
@@ -498,12 +284,8 @@ export default function Home() {
               </h2>
             </div>
 
-            {/* Description Card */}
-            <div className={`backdrop-blur-md rounded-3xl p-8 md:p-12 border shadow-2xl mb-16 ${
-              theme === 'dark'
-                ? 'bg-black/40 border-gray-800/50 shadow-blue-900/20'
-                : 'bg-white/40 border-gray-300/50 shadow-blue-400/20'
-            }`}>
+            {/* Description Card using GlassCard */}
+           <GlassCard color="blue" className="mb-16" theme={theme}>
               <div className="text-center">
                 <div className="flex justify-center mb-8">
                   <div className={`h-px w-32 animate-scan ${
@@ -555,38 +337,141 @@ export default function Home() {
                   </Link>
                 </div>
               </div>
-            </div>
+            </GlassCard>
 
-            {/* Stats Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-20">
-              {[
-                { number: '50+', label: 'Research Papers', gradient: 'from-blue-500 to-cyan-500' },
-                { number: '25+', label: 'AI Projects', gradient: 'from-blue-600 to-indigo-600' },
-                { number: '15+', label: 'Industry Partners', gradient: 'from-blue-700 to-purple-700' },
-                { number: '8+', label: 'Years of Research', gradient: 'from-blue-800 to-violet-800' }
-              ].map((stat, index) => (
-                <div 
-                  key={index} 
-                  className={`backdrop-blur-sm rounded-2xl p-6 border transition-all duration-500 group hover:transform hover:-translate-y-2 hover:shadow-xl ${
-                    theme === 'dark'
-                      ? 'bg-gradient-to-br from-gray-900/60 to-black/60 border-gray-800/50 hover:border-blue-700/50 hover:shadow-blue-900/20'
-                      : 'bg-gradient-to-br from-white/60 to-gray-100/60 border-gray-300/50 hover:border-blue-400/50 hover:shadow-blue-400/20'
-                  }`}
-                >
-                  <div className={`text-4xl md:text-5xl font-bold bg-gradient-to-r ${stat.gradient} bg-clip-text text-transparent mb-3`}>
-                    {stat.number}
-                  </div>
-                  <div className={`text-sm font-medium tracking-wide group-hover:text-blue-300 transition-colors duration-300 flex items-center ${
-                    theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
-                  }`}>
-                    <div className={`w-2 h-2 rounded-full mr-2 animate-pulse ${
-                      theme === 'dark' ? 'bg-blue-500' : 'bg-blue-400'
-                    }`}></div>
-                    {stat.label}
-                  </div>
-                </div>
+            {/* Stats Grid using StatsCard */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-20">
+              {stats.map((stat, index) => (
+                <StatsCard
+                  key={index}
+                  label={stat.label}
+                  value={stat.number}
+                  icon={stat.icon}
+                  color={stat.color}
+                  className="animate-floating"
+                  theme={theme}
+                  style={{ animationDelay: `${index * 100}ms` }}
+                />
               ))}
             </div>
+
+            {/* Featured Projects Section */}
+            <GlassCard color="blue" className="mb-20" theme={theme}>
+              <div className="text-center mb-10">
+                <h3 className={`text-3xl font-bold mb-4 ${
+                  theme === 'dark' ? 'text-white' : 'text-gray-900'
+                }`}>
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400">
+                    Featured Research Projects
+                  </span>
+                </h3>
+                <p className={`text-lg ${
+                  theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
+                }`}>
+                  Cutting-edge AI research that's shaping the future
+                </p>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {[
+                  { 
+                    title: 'Explainable AI Systems', 
+                    desc: 'Developing transparent AI models for critical decision-making',
+                    gradient: 'from-blue-500/20 to-blue-700/10'
+                  },
+                  { 
+                    title: 'Multimodal LLM Research', 
+                    desc: 'Advanced language models that understand text, images, and audio',
+                    gradient: 'from-cyan-500/20 to-blue-600/10'
+                  }
+                ].map((project, index) => (
+                  <div 
+                    key={index}
+                    className={`rounded-2xl p-6 border backdrop-blur-sm transition-all duration-300 hover:transform hover:-translate-y-2 hover:shadow-xl ${
+                      theme === 'dark'
+                        ? 'bg-gradient-to-br from-gray-900/60 to-black/60 border-gray-800/50 hover:border-blue-700/50 hover:shadow-blue-900/20'
+                        : 'bg-gradient-to-br from-white/60 to-gray-100/60 border-gray-300/50 hover:border-blue-400/50 hover:shadow-blue-400/20'
+                    }`}
+                  >
+                    <div className="flex items-start space-x-4">
+                      <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${project.gradient} flex items-center justify-center`}>
+                        <div className="text-white text-xl font-bold">
+                          {index + 1}
+                        </div>
+                      </div>
+                      <div className="flex-1">
+                        <h4 className={`text-xl font-bold mb-2 ${
+                          theme === 'dark' ? 'text-white' : 'text-gray-900'
+                        }`}>
+                          {project.title}
+                        </h4>
+                        <p className={`text-sm ${
+                          theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
+                        }`}>
+                          {project.desc}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </GlassCard>
+
+            {/* Contact CTA */}
+            <GlassCard color="cyan" theme={theme}>
+              <div className="text-center">
+                <h3 className={`text-3xl font-bold mb-6 ${
+                  theme === 'dark' ? 'text-white' : 'text-gray-900'
+                }`}>
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400">
+                    Ready to Collaborate?
+                  </span>
+                </h3>
+                <p className={`text-xl mb-8 ${
+                  theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
+                }`}>
+                  Join our network of researchers, students, and industry partners
+                </p>
+                
+                <div className="flex flex-col sm:flex-row justify-center items-center gap-6">
+                  <div className={`flex items-center space-x-3 px-6 py-4 rounded-xl border ${
+                    theme === 'dark'
+                      ? 'bg-black/40 border-blue-800/50'
+                      : 'bg-white/40 border-blue-300/50'
+                  }`}>
+                    <FaEnvelope className={`text-xl ${
+                      theme === 'dark' ? 'text-blue-400' : 'text-blue-600'
+                    }`} />
+                    <div className="text-left">
+                      <p className={`text-sm ${
+                        theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
+                      }`}>Email us at</p>
+                      <p className={`font-semibold ${
+                        theme === 'dark' ? 'text-blue-300' : 'text-blue-700'
+                      }`}>research@elitelab.ai</p>
+                    </div>
+                  </div>
+                  
+                  <div className={`flex items-center space-x-3 px-6 py-4 rounded-xl border ${
+                    theme === 'dark'
+                      ? 'bg-black/40 border-blue-800/50'
+                      : 'bg-white/40 border-blue-300/50'
+                  }`}>
+                    <FaPhone className={`text-xl ${
+                      theme === 'dark' ? 'text-blue-400' : 'text-blue-600'
+                    }`} />
+                    <div className="text-left">
+                      <p className={`text-sm ${
+                        theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
+                      }`}>Call us</p>
+                      <p className={`font-semibold ${
+                        theme === 'dark' ? 'text-blue-300' : 'text-blue-700'
+                      }`}>+1 (555) 123-4567</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </GlassCard>
           </div>
         </div>
       </div>
@@ -619,7 +504,7 @@ export default function Home() {
         }`}></div>
       </div>
 
-      {/* Add Footer Component - You'll need to update Footer.jsx too */}
+      {/* Footer */}
       <Footer theme={theme} />
     </div>
   );
