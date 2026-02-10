@@ -12,7 +12,8 @@ import ProtectedRoute from './components/ProtectedRoute'
 import AllAdmins from './pages/admin/Admins/alladmins'
 import PendingAdmins from './pages/admin/Admins/pendingAdmins'
 import ChangePassword from './pages/admin/changePassword'
-
+import Contact from './pages/admin/Contacts/contact'
+import ContactedUser from './pages/admin/Contacts/contactedUser'
 function App() {
   return (
     <ThemeProvider>
@@ -46,9 +47,13 @@ function App() {
                 <AdminLayout />
               </ProtectedRoute>
             }>
-              <Route index element={<Navigate to="/admin/dashboard" replace />} />
+            <Route index element={<Navigate to="/admin/dashboard" replace />} />
               <Route path="dashboard" element={<AdminDashboard />} />
-
+              <Route path="contacts">
+              <Route index element={<Navigate to="/admin/contacts/messages" replace />} />
+              <Route path="messages" element={<ContactedUser />} />
+              <Route path="compose" element={<Contact />} />
+            </Route>
               <Route path="change-password" element={<ChangePassword />} />
               
               {/* Admin Management Routes */}

@@ -10,7 +10,9 @@ import {
   FiMenu,
   FiUserCheck,
   FiUserPlus,
-  FiChevronDown
+  FiChevronDown,
+  FiMail,
+  FiMessageSquare
 } from 'react-icons/fi';
 import { useNavigate, useLocation } from 'react-router-dom';
 
@@ -24,6 +26,7 @@ export default function Sidebar({
 }) {
   const [admin, setAdmin] = useState(null);
   const [showAdminSubmenu, setShowAdminSubmenu] = useState(false);
+  const [showContactSubmenu, setShowContactSubmenu] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -58,6 +61,7 @@ export default function Sidebar({
   // Check if current route is active
   const isDashboardActive = location.pathname === '/admin/dashboard';
   const isAdminsActive = location.pathname.includes('/admin/admins');
+  const isContactsActive = location.pathname.includes('/admin/contacts');
 
   return (
     <>
@@ -208,6 +212,85 @@ export default function Sidebar({
                   )}
                 </div>
               </button>
+            </li>
+
+            {/* Contact Management */}
+            <li>
+              <div>
+                <button
+                  onClick={() => {
+                    setShowContactSubmenu(!showContactSubmenu);
+                    // If clicking contact for first time, navigate to messages
+                    if (!showContactSubmenu) {
+                      navigate('/admin/contacts/messages');
+                    }
+                  }}
+                  className={`flex items-center w-full rounded-xl transition-all duration-300 group ${
+                    isSidebarOpen ? 'px-4 py-3' : 'p-3 justify-center'
+                  } ${
+                    isContactsActive
+                      ? 'bg-gradient-to-r from-blue-600/30 to-cyan-600/20 text-white shadow-lg shadow-blue-500/10'
+                      : 'text-gray-400 hover:text-white hover:bg-gray-800/30'
+                  }`}
+                >
+                  <div className={`flex items-center ${isSidebarOpen ? 'space-x-4' : 'justify-center'}`}>
+                    <span className={`flex items-center justify-center w-5 h-5 ${
+                      isContactsActive 
+                        ? 'text-blue-400' 
+                        : 'text-gray-400 group-hover:text-blue-300'
+                    } transition-transform duration-200`}>
+                      <FiMail />
+                    </span>
+                    {isSidebarOpen && (
+                      <span className="text-sm font-medium tracking-wide whitespace-nowrap">
+                        Contacts
+                      </span>
+                    )}
+                  </div>
+                  {isSidebarOpen && (
+                    <FiChevronDown className={`ml-auto transition-transform duration-300 ${showContactSubmenu ? 'rotate-180' : ''}`} />
+                  )}
+                </button>
+
+                {/* Submenu for Contact section */}
+                {isSidebarOpen && showContactSubmenu && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="ml-12 mt-1 space-y-1"
+                  >
+                    <button
+                      onClick={() => {
+                        navigate('/admin/contacts/messages');
+                        if (isMobile) setIsSidebarOpen(false);
+                      }}
+                      className={`flex items-center space-x-2 w-full px-3 py-2 rounded-lg text-sm transition-colors text-left ${
+                        location.pathname === '/admin/contacts/messages'
+                          ? 'text-blue-400 bg-blue-900/20'
+                          : 'text-gray-400 hover:text-white hover:bg-gray-800/30'
+                      }`}
+                    >
+                      <FiMessageSquare />
+                      <span>Messages</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        navigate('/admin/contacts/compose');
+                        if (isMobile) setIsSidebarOpen(false);
+                      }}
+                      className={`flex items-center space-x-2 w-full px-3 py-2 rounded-lg text-sm transition-colors text-left ${
+                        location.pathname === '/admin/contacts/compose'
+                          ? 'text-blue-400 bg-blue-900/20'
+                          : 'text-gray-400 hover:text-white hover:bg-gray-800/30'
+                      }`}
+                    >
+                      <FiMail />
+                      <span>Compose</span>
+                    </button>
+                  </motion.div>
+                )}
+              </div>
             </li>
 
             {/* Admins (only for superAdmin) */}

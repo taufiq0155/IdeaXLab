@@ -3,19 +3,32 @@ import { Link } from 'react-router-dom';
 import { 
   FaUser, FaBars, FaTimes, FaChevronDown, 
   FaEnvelope, FaPhone, FaCaretRight,
-  FaSun, FaMoon
+  FaSun, FaMoon, FaCheckCircle, FaPaperPlane
 } from 'react-icons/fa';
+import { FiUser, FiMail, FiPhone, FiMessageSquare, FiSend } from 'react-icons/fi';
 import { useTheme } from '../context/ThemeContext';
 import researchLabLogo from '../assets/researchLab.jpeg';
 import Footer from './footer';
 import AnimatedCanvas from '../components/animations/animatedCanvas';
 import GlassCard from '../components/ui/GlassCard';
 import StatsCard from '../components/ui/StatsCard';
+import { toast, Toaster } from 'react-hot-toast';
 
 export default function Home() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { theme, toggleTheme } = useTheme();
+
+  // Contact form state
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    subject: '',
+    message: '',
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formSubmitted, setFormSubmitted] = useState(false);
 
   // Scroll effect for navbar
   useEffect(() => {
@@ -25,6 +38,91 @@ export default function Home() {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  // Handle form input changes
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  // Handle form submission
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    // Validation
+    if (!formData.name.trim()) {
+      toast.error('Please enter your name');
+      return;
+    }
+    if (!formData.email.trim()) {
+      toast.error('Please enter your email');
+      return;
+    }
+    if (!formData.message.trim()) {
+      toast.error('Please enter your message');
+      return;
+    }
+
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      toast.error('Please enter a valid email address');
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const response = await fetch('http://localhost:5000/api/contacts', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: formData.name.trim(),
+          email: formData.email.trim(),
+          phone: formData.phone.trim() || '',
+          subject: formData.subject.trim() || 'General Inquiry',
+          message: formData.message.trim(),
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        toast.success(data.message || 'Message sent successfully! We will get back to you soon.');
+        
+        // Reset form
+        setFormData({
+          name: '',
+          email: '',
+          phone: '',
+          subject: '',
+          message: '',
+        });
+        
+        setFormSubmitted(true);
+        
+        // Reset submitted state after 5 seconds
+        setTimeout(() => {
+          setFormSubmitted(false);
+        }, 5000);
+      } else {
+        let errorMsg = data.message || 'Failed to send message';
+        if (data.errors && data.errors.length > 0) {
+          errorMsg = data.errors.map(err => err.msg).join(', ');
+        }
+        throw new Error(errorMsg);
+      }
+    } catch (error) {
+      toast.error(error.message || 'Failed to send message. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const menuItems = [
     'Home',
@@ -68,6 +166,19 @@ export default function Home() {
 
   return (
     <div className={`min-h-screen relative overflow-hidden ${theme === 'dark' ? 'bg-black' : 'bg-gray-50'}`}>
+      {/* Toaster for notifications */}
+      <Toaster 
+        position="top-right"
+        toastOptions={{
+          duration: 4000,
+          style: {
+            background: theme === 'dark' ? '#1f2937' : '#ffffff',
+            color: theme === 'dark' ? '#ffffff' : '#111827',
+            border: theme === 'dark' ? '1px solid #374151' : '1px solid #d1d5db',
+          },
+        }}
+      />
+
       {/* Animated Canvas Background */}
       <AnimatedCanvas theme={theme} />
 
@@ -99,7 +210,7 @@ export default function Home() {
                 
                 <img 
                   src={researchLabLogo} 
-                  alt="EliteLab.AI Logo" 
+                  alt="IdeaXlab logo" 
                   className="relative h-16 w-auto max-w-[200px] z-10 transform group-hover:scale-105 transition-transform duration-300"
                   style={{
                     filter: theme === 'dark' 
@@ -259,7 +370,7 @@ export default function Home() {
               <h1 className={`text-4xl md:text-6xl font-bold mb-10 leading-tight tracking-tight ${
                 theme === 'dark' ? 'text-white' : 'text-gray-900'
               }`}>
-                Welcome to <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400">ELITE</span> Research Lab
+                Welcome to <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400">IdeaXLab</span> 
               </h1>
               
               <div className={`inline-flex items-center justify-center px-8 py-4 rounded-full border shadow-lg backdrop-blur-sm mb-12 ${
@@ -285,7 +396,7 @@ export default function Home() {
             </div>
 
             {/* Description Card using GlassCard */}
-           <GlassCard color="blue" className="mb-16" theme={theme}>
+            <GlassCard color="blue" className="mb-16" theme={theme}>
               <div className="text-center">
                 <div className="flex justify-center mb-8">
                   <div className={`h-px w-32 animate-scan ${
@@ -298,7 +409,7 @@ export default function Home() {
                 <p className={`text-xl md:text-2xl leading-relaxed mb-10 font-light tracking-wide ${
                   theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
                 }`}>
-                  At <span className={`${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'} font-semibold`}>ELITE Research Lab</span> (Explainable LLM and Interpretable Technology Ensemble Research Lab), we innovate in AI, creating solutions that are both advanced and interpretable. Our research focuses on making AI technologies transparent, reliable, and accessible to everyone.
+                  At <span className={`${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'} font-semibold`}>IdeaXLab</span> (Explainable LLM and Interpretable Technology Ensemble Research Lab), we innovate in AI, creating solutions that are both advanced and interpretable. Our research focuses on making AI technologies transparent, reliable, and accessible to everyone.
                 </p>
 
                 <div className="flex flex-col sm:flex-row gap-6 justify-center mt-12">
@@ -417,6 +528,208 @@ export default function Home() {
               </div>
             </GlassCard>
 
+            {/* Contact Form Section - Added Here */}
+            <div className="mb-20">
+              <GlassCard color="purple" className="overflow-hidden" theme={theme}>
+                <div className="p-6 md:p-8">
+                  {formSubmitted ? (
+                    <div className="text-center py-12">
+                      <div className="flex justify-center mb-6">
+                        <div className="w-20 h-20 bg-green-500/20 rounded-full flex items-center justify-center">
+                          <FaCheckCircle className="w-10 h-10 text-green-400 animate-bounce" />
+                        </div>
+                      </div>
+                      <h3 className={`text-3xl font-bold mb-4 ${
+                        theme === 'dark' ? 'text-white' : 'text-gray-900'
+                      }`}>
+                        Message Sent Successfully!
+                      </h3>
+                      <p className={`text-lg mb-8 ${
+                        theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
+                      }`}>
+                        Thank you for contacting us. Our team will get back to you within 24-48 hours.
+                      </p>
+                      <button
+                        onClick={() => setFormSubmitted(false)}
+                        className={`px-8 py-3 rounded-lg font-medium transition-all duration-300 ${
+                          theme === 'dark'
+                            ? 'bg-blue-700 hover:bg-blue-600 text-white'
+                            : 'bg-blue-600 hover:bg-blue-500 text-white'
+                        }`}
+                      >
+                        Send Another Message
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="text-center mb-8">
+                        <h3 className={`text-3xl font-bold mb-3 ${
+                          theme === 'dark' ? 'text-white' : 'text-gray-900'
+                        }`}>
+                          <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">
+                            Get In Touch With Us
+                          </span>
+                        </h3>
+                        <p className={`text-lg ${
+                          theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
+                        }`}>
+                          Have questions about our research? Send us a message
+                        </p>
+                      </div>
+
+                      <form onSubmit={handleSubmit} className="space-y-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          {/* Name Field */}
+                          <div className="space-y-2">
+                            <label className={`block text-sm font-medium flex items-center gap-2 ${
+                              theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                            }`}>
+                              <FiUser className="w-4 h-4" />
+                              Your Name *
+                            </label>
+                            <input
+                              type="text"
+                              name="name"
+                              value={formData.name}
+                              onChange={handleChange}
+                              placeholder="Enter your full name"
+                              className={`w-full px-4 py-3 rounded-xl transition placeholder-gray-500 backdrop-blur-sm border ${
+                                theme === 'dark'
+                                  ? 'bg-black/40 border-gray-800 hover:border-gray-600 text-white focus:border-purple-500'
+                                  : 'bg-white/40 border-gray-300 hover:border-gray-400 text-gray-900 focus:border-purple-400'
+                              }`}
+                              required
+                              disabled={isSubmitting}
+                            />
+                          </div>
+
+                          {/* Email Field */}
+                          <div className="space-y-2">
+                            <label className={`block text-sm font-medium flex items-center gap-2 ${
+                              theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                            }`}>
+                              <FiMail className="w-4 h-4" />
+                              Email Address *
+                            </label>
+                            <input
+                              type="email"
+                              name="email"
+                              value={formData.email}
+                              onChange={handleChange}
+                              placeholder="Enter your email address"
+                              className={`w-full px-4 py-3 rounded-xl transition placeholder-gray-500 backdrop-blur-sm border ${
+                                theme === 'dark'
+                                  ? 'bg-black/40 border-gray-800 hover:border-gray-600 text-white focus:border-purple-500'
+                                  : 'bg-white/40 border-gray-300 hover:border-gray-400 text-gray-900 focus:border-purple-400'
+                              }`}
+                              required
+                              disabled={isSubmitting}
+                            />
+                          </div>
+
+                          {/* Phone Field */}
+                          <div className="space-y-2">
+                            <label className={`block text-sm font-medium flex items-center gap-2 ${
+                              theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                            }`}>
+                              <FiPhone className="w-4 h-4" />
+                              Phone Number (Optional)
+                            </label>
+                            <input
+                              type="tel"
+                              name="phone"
+                              value={formData.phone}
+                              onChange={handleChange}
+                              placeholder="Enter your phone number"
+                              className={`w-full px-4 py-3 rounded-xl transition placeholder-gray-500 backdrop-blur-sm border ${
+                                theme === 'dark'
+                                  ? 'bg-black/40 border-gray-800 hover:border-gray-600 text-white focus:border-purple-500'
+                                  : 'bg-white/40 border-gray-300 hover:border-gray-400 text-gray-900 focus:border-purple-400'
+                              }`}
+                              disabled={isSubmitting}
+                            />
+                          </div>
+
+                          {/* Subject Field */}
+                          <div className="space-y-2">
+                            <label className={`block text-sm font-medium flex items-center gap-2 ${
+                              theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                            }`}>
+                              <FiMessageSquare className="w-4 h-4" />
+                              Subject (Optional)
+                            </label>
+                            <input
+                              type="text"
+                              name="subject"
+                              value={formData.subject}
+                              onChange={handleChange}
+                              placeholder="Enter message subject"
+                              className={`w-full px-4 py-3 rounded-xl transition placeholder-gray-500 backdrop-blur-sm border ${
+                                theme === 'dark'
+                                  ? 'bg-black/40 border-gray-800 hover:border-gray-600 text-white focus:border-purple-500'
+                                  : 'bg-white/40 border-gray-300 hover:border-gray-400 text-gray-900 focus:border-purple-400'
+                              }`}
+                              disabled={isSubmitting}
+                            />
+                          </div>
+                        </div>
+
+                        {/* Message Field */}
+                        <div className="space-y-2">
+                          <label className={`block text-sm font-medium flex items-center gap-2 ${
+                            theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                          }`}>
+                            <FiMessageSquare className="w-4 h-4" />
+                            Your Message *
+                          </label>
+                          <textarea
+                            name="message"
+                            value={formData.message}
+                            onChange={handleChange}
+                            placeholder="Type your message here..."
+                            rows="5"
+                            className={`w-full px-4 py-3 rounded-xl transition placeholder-gray-500 backdrop-blur-sm resize-none border ${
+                              theme === 'dark'
+                                ? 'bg-black/40 border-gray-800 hover:border-gray-600 text-white focus:border-purple-500'
+                                : 'bg-white/40 border-gray-300 hover:border-gray-400 text-gray-900 focus:border-purple-400'
+                            }`}
+                            required
+                            disabled={isSubmitting}
+                          />
+                        </div>
+
+                        {/* Submit Button */}
+                        <button
+                          type="submit"
+                          disabled={isSubmitting}
+                          className={`w-full px-6 py-4 rounded-xl font-medium transition-all duration-300 flex items-center justify-center gap-2 group relative overflow-hidden ${
+                            theme === 'dark'
+                              ? 'bg-gradient-to-r from-purple-700 to-pink-700 hover:from-purple-600 hover:to-pink-600 text-white disabled:opacity-50'
+                              : 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white disabled:opacity-50'
+                          }`}
+                        >
+                          <span className="absolute inset-0 bg-white/10 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700"></span>
+                          <span className="relative flex items-center justify-center gap-2">
+                            {isSubmitting ? (
+                              <>
+                                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                Sending Message...
+                              </>
+                            ) : (
+                              <>
+                                <FiSend className="w-5 h-5" />
+                                Send Message
+                              </>
+                            )}
+                          </span>
+                        </button>
+                      </form>
+                    </>
+                  )}
+                </div>
+              </GlassCard>
+            </div>
+
             {/* Contact CTA */}
             <GlassCard color="cyan" theme={theme}>
               <div className="text-center">
@@ -448,7 +761,7 @@ export default function Home() {
                       }`}>Email us at</p>
                       <p className={`font-semibold ${
                         theme === 'dark' ? 'text-blue-300' : 'text-blue-700'
-                      }`}>research@elitelab.ai</p>
+                      }`}>research@ideaXlab.com</p>
                     </div>
                   </div>
                   
@@ -466,7 +779,7 @@ export default function Home() {
                       }`}>Call us</p>
                       <p className={`font-semibold ${
                         theme === 'dark' ? 'text-blue-300' : 'text-blue-700'
-                      }`}>+1 (555) 123-4567</p>
+                      }`}>+8801555555555</p>
                     </div>
                   </div>
                 </div>
