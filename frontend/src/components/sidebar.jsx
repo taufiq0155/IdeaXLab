@@ -12,7 +12,11 @@ import {
   FiUserPlus,
   FiChevronDown,
   FiMail,
-  FiMessageSquare
+  FiMessageSquare,
+  FiFileText,      // Added for Blog
+  FiFolder,        // Added for Categories
+  FiEdit,          // Added for Edit
+  FiPlus           // Added for Create
 } from 'react-icons/fi';
 import { useNavigate, useLocation } from 'react-router-dom';
 
@@ -27,6 +31,7 @@ export default function Sidebar({
   const [admin, setAdmin] = useState(null);
   const [showAdminSubmenu, setShowAdminSubmenu] = useState(false);
   const [showContactSubmenu, setShowContactSubmenu] = useState(false);
+  const [showBlogSubmenu, setShowBlogSubmenu] = useState(false);  // Added for Blog
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -62,6 +67,7 @@ export default function Sidebar({
   const isDashboardActive = location.pathname === '/admin/dashboard';
   const isAdminsActive = location.pathname.includes('/admin/admins');
   const isContactsActive = location.pathname.includes('/admin/contacts');
+  const isBlogActive = location.pathname.includes('/admin/blog');  // Added for Blog
 
   return (
     <>
@@ -212,6 +218,138 @@ export default function Sidebar({
                   )}
                 </div>
               </button>
+            </li>
+
+            {/* BLOG MANAGEMENT - NEW SECTION */}
+            <li>
+              <div>
+                <button
+                  onClick={() => {
+                    setShowBlogSubmenu(!showBlogSubmenu);
+                    // If clicking blog for first time, navigate to blog list
+                    if (!showBlogSubmenu) {
+                      navigate('/admin/blog');
+                    }
+                  }}
+                  className={`flex items-center w-full rounded-xl transition-all duration-300 group ${
+                    isSidebarOpen ? 'px-4 py-3' : 'p-3 justify-center'
+                  } ${
+                    isBlogActive
+                      ? 'bg-gradient-to-r from-blue-600/30 to-cyan-600/20 text-white shadow-lg shadow-blue-500/10'
+                      : 'text-gray-400 hover:text-white hover:bg-gray-800/30'
+                  }`}
+                >
+                  <div className={`flex items-center ${isSidebarOpen ? 'space-x-4' : 'justify-center'}`}>
+                    <span className={`flex items-center justify-center w-5 h-5 ${
+                      isBlogActive 
+                        ? 'text-blue-400' 
+                        : 'text-gray-400 group-hover:text-blue-300'
+                    } transition-transform duration-200`}>
+                      <FiFileText />
+                    </span>
+                    {isSidebarOpen && (
+                      <span className="text-sm font-medium tracking-wide whitespace-nowrap">
+                        Blog
+                      </span>
+                    )}
+                  </div>
+                  {isSidebarOpen && (
+                    <FiChevronDown className={`ml-auto transition-transform duration-300 ${showBlogSubmenu ? 'rotate-180' : ''}`} />
+                  )}
+                </button>
+
+                {/* Submenu for Blog section */}
+                {isSidebarOpen && showBlogSubmenu && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="ml-12 mt-1 space-y-1"
+                  >
+                    {/* All Blog Posts */}
+                    <button
+                      onClick={() => {
+                        navigate('/admin/blog');
+                        if (isMobile) setIsSidebarOpen(false);
+                      }}
+                      className={`flex items-center space-x-2 w-full px-3 py-2 rounded-lg text-sm transition-colors text-left ${
+                        location.pathname === '/admin/blog'
+                          ? 'text-blue-400 bg-blue-900/20'
+                          : 'text-gray-400 hover:text-white hover:bg-gray-800/30'
+                      }`}
+                    >
+                      <FiFileText className="w-4 h-4" />
+                      <span>All Posts</span>
+                    </button>
+
+                    {/* Create New Post */}
+                    <button
+                      onClick={() => {
+                        navigate('/admin/blog/create');
+                        if (isMobile) setIsSidebarOpen(false);
+                      }}
+                      className={`flex items-center space-x-2 w-full px-3 py-2 rounded-lg text-sm transition-colors text-left ${
+                        location.pathname === '/admin/blog/create'
+                          ? 'text-blue-400 bg-blue-900/20'
+                          : 'text-gray-400 hover:text-white hover:bg-gray-800/30'
+                      }`}
+                    >
+                      <FiPlus className="w-4 h-4" />
+                      <span>Create Post</span>
+                    </button>
+
+                    {/* Edit Post (Dynamic - will open with ID) */}
+                    <button
+                      onClick={() => {
+                        // This will navigate to edit page with a specific ID
+                        // You might want to show a list or modal to select which post to edit
+                        navigate('/admin/blog'); // First go to blog list, then edit from there
+                        if (isMobile) setIsSidebarOpen(false);
+                      }}
+                      className={`flex items-center space-x-2 w-full px-3 py-2 rounded-lg text-sm transition-colors text-left ${
+                        location.pathname.includes('/admin/blog/edit')
+                          ? 'text-blue-400 bg-blue-900/20'
+                          : 'text-gray-400 hover:text-white hover:bg-gray-800/30'
+                      }`}
+                    >
+                      <FiEdit className="w-4 h-4" />
+                      <span>Edit Post</span>
+                    </button>
+
+                    {/* Add Categories */}
+                    <button
+                      onClick={() => {
+                        navigate('/admin/blog/categories');
+                        if (isMobile) setIsSidebarOpen(false);
+                      }}
+                      className={`flex items-center space-x-2 w-full px-3 py-2 rounded-lg text-sm transition-colors text-left ${
+                        location.pathname === '/admin/blog/categories'
+                          ? 'text-blue-400 bg-blue-900/20'
+                          : 'text-gray-400 hover:text-white hover:bg-gray-800/30'
+                      }`}
+                    >
+                      <FiFolder className="w-4 h-4" />
+                      <span>Add Categories</span>
+                    </button>
+
+                    {/* Edit Categories */}
+                    <button
+                      onClick={() => {
+                        navigate('/admin/blog/categories/edit');
+                        if (isMobile) setIsSidebarOpen(false);
+                      }}
+                      className={`flex items-center space-x-2 w-full px-3 py-2 rounded-lg text-sm transition-colors text-left ${
+                        location.pathname === '/admin/blog/categories/edit'
+                          ? 'text-blue-400 bg-blue-900/20'
+                          : 'text-gray-400 hover:text-white hover:bg-gray-800/30'
+                      }`}
+                    >
+                      <FiEdit className="w-4 h-4" />
+                      <span>Edit Categories</span>
+                    </button>
+                  </motion.div>
+                )}
+              </div>
             </li>
 
             {/* Contact Management */}

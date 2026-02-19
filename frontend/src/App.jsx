@@ -14,6 +14,12 @@ import PendingAdmins from './pages/admin/Admins/pendingAdmins'
 import ChangePassword from './pages/admin/changePassword'
 import Contact from './pages/admin/Contacts/contact'
 import ContactedUser from './pages/admin/Contacts/contactedUser'
+import BlogCategory from './pages/admin/Blog/BlogCategory'
+import BlogCreate from './pages/admin/Blog/BlogCreate'
+import BlogPage from './pages/admin/Blog/BlogPage'
+import ModifyBlog from './pages/admin/Blog/ModifyBlog'
+import ModifyBlogCategory from './pages/admin/Blog/ModifyBlogCategory'
+
 function App() {
   return (
     <ThemeProvider>
@@ -49,6 +55,15 @@ function App() {
             }>
             <Route index element={<Navigate to="/admin/dashboard" replace />} />
               <Route path="dashboard" element={<AdminDashboard />} />
+               
+              <Route path="blog">
+                <Route index element={<BlogPage />} />
+                <Route path="create" element={<BlogCreate />} />
+                <Route path="edit/:id" element={<ModifyBlog />} />
+                <Route path="categories" element={<BlogCategory />} />
+                <Route path="categories/edit" element={<ModifyBlogCategory />} />
+              </Route>
+
               <Route path="contacts">
               <Route index element={<Navigate to="/admin/contacts/messages" replace />} />
               <Route path="messages" element={<ContactedUser />} />
