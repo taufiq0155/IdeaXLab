@@ -10,6 +10,7 @@ import {
   FiSearch,
   FiClock,
   FiArrowLeft,
+  FiLink,
 } from "react-icons/fi";
 import { toast, Toaster } from "react-hot-toast";
 import { motion, AnimatePresence } from "framer-motion";
@@ -213,67 +214,24 @@ const BlogPage = () => {
     }
   };
 
-  // Handle status toggle
-  const handleStatusToggle = async (blogId, currentStatus) => {
-    const newStatus = currentStatus === "published" ? "draft" : "published";
-
-    const token = localStorage.getItem('adminToken');
-    if (!token) {
-      toast.error("Please log in to update status");
-      return;
-    }
-
-    try {
-      console.log("Toggling status:", `http://localhost:5000/api/admin/blogs/${blogId}/status`);
-      
-      const response = await fetch(`http://localhost:5000/api/admin/blogs/${blogId}/status`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({ status: newStatus }),
-      });
-
-      console.log("Status toggle response:", response.status);
-
-      // Check if response is JSON
-      const contentType = response.headers.get("content-type");
-      if (!contentType || !contentType.includes("application/json")) {
-        const text = await response.text();
-        console.error("Non-JSON response:", text.substring(0, 200));
-        throw new Error("Server returned HTML");
-      }
-
-      if (response.status === 401) {
-        localStorage.removeItem('adminToken');
-        localStorage.removeItem('adminData');
-        toast.error("Session expired. Please log in again.");
-        return;
-      }
-
-      const data = await response.json();
-
-      if (response.ok && data.success) {
-        setBlogs(prev =>
-          prev.map(blog =>
-            blog._id === blogId ? { ...blog, status: newStatus } : blog
-          )
-        );
-        toast.success(`Blog ${newStatus === "published" ? "published" : "unpublished"}!`);
-      } else {
-        throw new Error(data.message || "Failed to update status");
-      }
-    } catch (err) {
-      console.error("Status toggle error:", err);
-      toast.error(err.message);
-    }
-  };
-
   // Strip HTML tags for excerpt
   const stripHtmlTags = (html) => {
     if (!html) return "";
     return html.replace(/<[^>]*>/g, "");
+  };
+
+  const getResourceLinks = (blog) => {
+    if (!blog || !Array.isArray(blog.resourceLinks)) return [];
+
+    return blog.resourceLinks
+      .filter((link) => link && link.name && link.url)
+      .map((link) => ({
+        name: String(link.name).trim(),
+        url: /^https?:\/\//i.test(String(link.url).trim())
+          ? String(link.url).trim()
+          : `https://${String(link.url).trim()}`,
+      }))
+      .filter((link) => link.name && link.url);
   };
 
   // Open blog detail
@@ -308,6 +266,8 @@ const BlogPage = () => {
 
   // Blog Detail View
   if (showBlogDetail && selectedBlog) {
+    const blogLinks = getResourceLinks(selectedBlog);
+
     return (
       <div className="min-h-screen bg-black relative overflow-hidden">
         <Toaster 
@@ -323,19 +283,20 @@ const BlogPage = () => {
         />
         <AnimatedCanvas />
         
-        <div className="relative z-10 p-6">
-          <button
-            onClick={closeBlogDetail}
-            className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-6"
-          >
-            <FiArrowLeft className="w-5 h-5" />
-            Back to Blog List
-          </button>
+        <div className="relative z-10 p-4 md:p-6">
+          <div className="max-w-5xl mx-auto">
+            <button
+              onClick={closeBlogDetail}
+              className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-4"
+            >
+              <FiArrowLeft className="w-5 h-5" />
+              Back to Blog List
+            </button>
 
-          <GlassCard className="p-8">
+            <GlassCard className="p-5 md:p-8">
             {/* Blog Header */}
             <div className="mb-8">
-              <div className="flex items-center gap-3 mb-4">
+              <div className="flex flex-wrap items-center gap-3 mb-4">
                 <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
                   selectedBlog.status === "published"
                     ? "bg-green-600/20 text-green-300 border border-green-500/30"
@@ -350,11 +311,11 @@ const BlogPage = () => {
                 </span>
               </div>
 
-              <h1 className="text-4xl font-bold text-white mb-4">
+              <h1 className="text-2xl md:text-4xl font-bold text-white mb-4">
                 {selectedBlog.title}
               </h1>
 
-              <div className="flex items-center gap-4 text-sm text-gray-400">
+              <div className="flex flex-wrap items-center gap-4 text-sm text-gray-400">
                 <span className="flex items-center gap-1">
                   <FiCalendar className="w-4 h-4" />
                   {selectedBlog.createdAt
@@ -374,17 +335,17 @@ const BlogPage = () => {
 
             {/* Featured Image */}
             {selectedBlog.featuredImage && (
-              <div className="mb-8 rounded-xl overflow-hidden border border-gray-700/30">
+              <div className="mb-8 rounded-xl overflow-hidden border border-gray-700/30 bg-black/40">
                 <img
                   src={selectedBlog.featuredImage}
                   alt={selectedBlog.title}
-                  className="w-full h-auto"
+                  className="w-full h-52 md:h-72 object-cover"
                 />
               </div>
             )}
 
             {/* Content */}
-            <div className="prose prose-invert max-w-none">
+            <div className="blog-content max-w-none text-gray-100">
               {selectedBlog.content ? (
                 <div
                   dangerouslySetInnerHTML={{
@@ -395,6 +356,29 @@ const BlogPage = () => {
                 <p className="text-gray-400 italic">No content available.</p>
               )}
             </div>
+
+            {/* Resource Links */}
+            {blogLinks.length > 0 && (
+              <div className="mt-8 pt-6 border-t border-gray-700/30">
+                <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
+                  <FiLink className="w-4 h-4 text-cyan-400" />
+                  Resource Links
+                </h3>
+                <div className="flex flex-wrap gap-2">
+                  {blogLinks.map((link, index) => (
+                    <a
+                      key={`blog-link-${index}`}
+                      href={link.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-3 py-1.5 rounded-full bg-cyan-600/20 text-cyan-300 border border-cyan-500/30 hover:bg-cyan-600/30 transition-colors text-sm"
+                    >
+                      {link.name}
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Actions */}
             <div className="flex gap-4 mt-8 pt-6 border-t border-gray-700/30">
@@ -407,17 +391,9 @@ const BlogPage = () => {
                 <FiEdit className="w-4 h-4" />
                 Edit Post
               </button>
-              <button
-                onClick={() => {
-                  handleStatusToggle(selectedBlog._id, selectedBlog.status);
-                }}
-                className="px-6 py-3 bg-black/60 backdrop-blur-sm border border-gray-800/70 hover:border-blue-600/50 rounded-xl text-white transition-all duration-300 flex items-center gap-2"
-              >
-                <FiEye className="w-4 h-4" />
-                {selectedBlog.status === "published" ? "Unpublish" : "Publish"}
-              </button>
             </div>
-          </GlassCard>
+            </GlassCard>
+          </div>
         </div>
 
         <div className="fixed bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-black via-transparent to-transparent pointer-events-none"></div>
@@ -599,7 +575,10 @@ const BlogPage = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <AnimatePresence>
             {filteredBlogs.length > 0 ? (
-              filteredBlogs.map((blog, index) => (
+              filteredBlogs.map((blog, index) => {
+                const resourceLinks = getResourceLinks(blog);
+
+                return (
                 <motion.div
                   key={blog._id}
                   initial={{ opacity: 0, y: 20 }}
@@ -635,16 +614,6 @@ const BlogPage = () => {
                           {blog.status || "draft"}
                         </span>
                         <div className="flex items-center gap-2">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleStatusToggle(blog._id, blog.status);
-                            }}
-                            className="p-1.5 bg-blue-600/20 text-blue-300 rounded-lg hover:bg-blue-600/30 transition-colors border border-blue-500/30"
-                            title="Toggle Status"
-                          >
-                            <FiEye className="w-3 h-3" />
-                          </button>
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
@@ -696,6 +665,23 @@ const BlogPage = () => {
                         {blog.excerpt || stripHtmlTags(blog.content).substring(0, 120) + "..." || "No excerpt available..."}
                       </p>
 
+                      {resourceLinks.length > 0 && (
+                        <div className="flex flex-wrap gap-2 mb-4">
+                          {resourceLinks.slice(0, 3).map((link, linkIndex) => (
+                            <a
+                              key={`card-link-${blog._id}-${linkIndex}`}
+                              href={link.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                              className="px-2 py-1 rounded-full bg-cyan-600/20 text-cyan-300 border border-cyan-500/30 hover:bg-cyan-600/30 transition-colors text-xs"
+                            >
+                              {link.name}
+                            </a>
+                          ))}
+                        </div>
+                      )}
+
                       {/* Meta */}
                       <div className="flex items-center justify-between text-xs text-gray-500">
                         <div className="flex items-center gap-3">
@@ -718,7 +704,8 @@ const BlogPage = () => {
                     </div>
                   </GlassCard>
                 </motion.div>
-              ))
+                );
+              })
             ) : (
               <div className="col-span-full">
                 <GlassCard className="p-12 text-center">

@@ -10,14 +10,63 @@ import {
   FiFileText,
   FiX,
   FiImage,
-  FiCheckCircle
+  FiCheckCircle,
+  FiLink
 } from "react-icons/fi";
 import { toast, Toaster } from "react-hot-toast";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import ReactQuill from "react-quill-new";
+import "quill/dist/quill.snow.css";
 import AnimatedCanvas from "../../../components/animations/animatedCanvas";
 import GlassCard from "../../../components/ui/GlassCard";
-import { Editor } from "@tinymce/tinymce-react";
+
+const PRESET_RESOURCE_LINKS = [
+  { label: "ResearchGate", value: "ResearchGate" },
+  { label: "GitHub", value: "GitHub" },
+  { label: "LinkedIn", value: "LinkedIn" },
+  { label: "IEEE", value: "IEEE" },
+  { label: "Springer", value: "Springer" },
+];
+
+const normalizeLinkUrl = (url) => {
+  const trimmed = String(url || "").trim();
+  if (!trimmed) return "";
+  return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+};
+
+const isValidHttpUrl = (url) => {
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === "http:" || parsed.protocol === "https:";
+  } catch (error) {
+    return false;
+  }
+};
+
+const quillModules = {
+  toolbar: [
+    [{ header: [1, 2, 3, false] }],
+    ["bold", "italic", "underline", "strike"],
+    [{ list: "ordered" }, { list: "bullet" }],
+    [{ align: [] }],
+    ["link", "image"],
+    ["clean"],
+  ],
+};
+
+const quillFormats = [
+  "header",
+  "bold",
+  "italic",
+  "underline",
+  "strike",
+  "list",
+  "bullet",
+  "align",
+  "link",
+  "image",
+];
 
 const BlogCreate = () => {
   const navigate = useNavigate();
@@ -33,8 +82,12 @@ const BlogCreate = () => {
     title: "",
     category: "",
     content: "",
+    resourceLinks: [],
   });
   const [featuredImage, setFeaturedImage] = useState("");
+  const [selectedPresetLink, setSelectedPresetLink] = useState("");
+  const [customLinkName, setCustomLinkName] = useState("");
+  const [customLinkUrl, setCustomLinkUrl] = useState("");
 
   // Get admin data from localStorage (like Contact component)
   useEffect(() => {
@@ -144,6 +197,92 @@ const BlogCreate = () => {
     handleFormChange("content", content);
   };
 
+  const handleAddPresetLink = () => {
+    if (!selectedPresetLink) return;
+
+    const alreadyAdded = form.resourceLinks.some(
+      (link) => link.name.toLowerCase() === selectedPresetLink.toLowerCase()
+    );
+
+    if (alreadyAdded) {
+      toast.error(`${selectedPresetLink} already added`);
+      return;
+    }
+
+    setForm((prev) => ({
+      ...prev,
+      resourceLinks: [...prev.resourceLinks, { name: selectedPresetLink, url: "" }],
+    }));
+    setSelectedPresetLink("");
+  };
+
+  const handleAddCustomLink = () => {
+    const name = customLinkName.trim();
+    const normalizedUrl = normalizeLinkUrl(customLinkUrl);
+
+    if (!name || !normalizedUrl) {
+      toast.error("Custom link name and URL are required");
+      return;
+    }
+
+    if (!isValidHttpUrl(normalizedUrl)) {
+      toast.error("Please provide a valid custom link URL");
+      return;
+    }
+
+    const alreadyAdded = form.resourceLinks.some(
+      (link) => link.name.toLowerCase() === name.toLowerCase()
+    );
+
+    if (alreadyAdded) {
+      toast.error("This link name is already added");
+      return;
+    }
+
+    setForm((prev) => ({
+      ...prev,
+      resourceLinks: [...prev.resourceLinks, { name, url: normalizedUrl }],
+    }));
+    setCustomLinkName("");
+    setCustomLinkUrl("");
+  };
+
+  const handleResourceLinkChange = (index, field, value) => {
+    setForm((prev) => {
+      const nextLinks = [...prev.resourceLinks];
+      nextLinks[index] = { ...nextLinks[index], [field]: value };
+      return { ...prev, resourceLinks: nextLinks };
+    });
+  };
+
+  const handleRemoveResourceLink = (index) => {
+    setForm((prev) => ({
+      ...prev,
+      resourceLinks: prev.resourceLinks.filter((_, i) => i !== index),
+    }));
+  };
+
+  const getValidatedResourceLinks = () => {
+    const cleanedLinks = form.resourceLinks
+      .map((link) => ({
+        name: String(link.name || "").trim(),
+        url: normalizeLinkUrl(link.url),
+      }))
+      .filter((link) => link.name || link.url);
+
+    for (const link of cleanedLinks) {
+      if (!link.name || !link.url) {
+        throw new Error("Each link must include both name and URL");
+      }
+
+      if (!isValidHttpUrl(link.url)) {
+        throw new Error(`Invalid URL for "${link.name}"`);
+      }
+    }
+
+    return cleanedLinks;
+  };
+
   const handleImageUpload = async (file) => {
     if (!file) return;
 
@@ -237,13 +376,15 @@ const BlogCreate = () => {
 
   try {
     const token = localStorage.getItem('adminToken');
+    const validatedResourceLinks = getValidatedResourceLinks();
 
     const blogData = {
       title: form.title,
       category: form.category,        // This sends category ID
       content: form.content,
       featuredImage: featuredImage,    // THIS MUST MATCH backend field name
-      status: "published"
+      status: "published",
+      resourceLinks: validatedResourceLinks,
     };
 
     console.log("Creating blog with data:", blogData);
@@ -283,8 +424,11 @@ const BlogCreate = () => {
         navigate('/admin/blog');
         
         // Reset form
-        setForm({ title: "", category: "", content: "" });
+        setForm({ title: "", category: "", content: "", resourceLinks: [] });
         setFeaturedImage("");
+        setSelectedPresetLink("");
+        setCustomLinkName("");
+        setCustomLinkUrl("");
       } else {
         throw new Error(data.message || "Failed to create blog");
       }
@@ -483,68 +627,117 @@ const BlogCreate = () => {
                   )}
                 </div>
 
+                {/* Resource Links */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2 flex items-center gap-2">
+                    <FiLink className="w-4 h-4 text-cyan-400" />
+                    Resource Links
+                  </label>
+                  <p className="text-xs text-gray-400 mb-3">
+                    Add preset links or create your own custom link name and URL.
+                  </p>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
+                    <select
+                      className="md:col-span-2 w-full px-4 py-3 bg-black/60 backdrop-blur-sm border border-gray-800/70 hover:border-blue-600/50 rounded-xl text-white focus:border-blue-500 transition-all duration-300"
+                      value={selectedPresetLink}
+                      onChange={(e) => setSelectedPresetLink(e.target.value)}
+                    >
+                      <option value="">Select preset link</option>
+                      {PRESET_RESOURCE_LINKS.filter(
+                        (preset) =>
+                          !form.resourceLinks.some(
+                            (link) =>
+                              link.name.toLowerCase() === preset.value.toLowerCase()
+                          )
+                      ).map((preset) => (
+                        <option key={preset.value} value={preset.value}>
+                          {preset.label}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      onClick={handleAddPresetLink}
+                      className="px-4 py-3 bg-blue-600/20 text-blue-300 border border-blue-500/30 rounded-xl hover:bg-blue-600/30 transition-all duration-300"
+                    >
+                      Add Preset
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+                    <input
+                      type="text"
+                      className="w-full px-4 py-3 bg-black/60 backdrop-blur-sm border border-gray-800/70 hover:border-blue-600/50 rounded-xl text-white focus:border-blue-500 transition-all duration-300"
+                      placeholder="Custom link name"
+                      value={customLinkName}
+                      onChange={(e) => setCustomLinkName(e.target.value)}
+                    />
+                    <input
+                      type="text"
+                      className="w-full px-4 py-3 bg-black/60 backdrop-blur-sm border border-gray-800/70 hover:border-blue-600/50 rounded-xl text-white focus:border-blue-500 transition-all duration-300"
+                      placeholder="Custom link URL"
+                      value={customLinkUrl}
+                      onChange={(e) => setCustomLinkUrl(e.target.value)}
+                    />
+                    <button
+                      type="button"
+                      onClick={handleAddCustomLink}
+                      className="px-4 py-3 bg-cyan-600/20 text-cyan-300 border border-cyan-500/30 rounded-xl hover:bg-cyan-600/30 transition-all duration-300"
+                    >
+                      Add Custom
+                    </button>
+                  </div>
+
+                  <div className="space-y-3">
+                    {form.resourceLinks.length > 0 ? (
+                      form.resourceLinks.map((link, index) => (
+                        <div key={`${link.name}-${index}`} className="grid grid-cols-1 md:grid-cols-12 gap-3">
+                          <input
+                            type="text"
+                            className="md:col-span-4 w-full px-4 py-3 bg-black/60 backdrop-blur-sm border border-gray-800/70 hover:border-blue-600/50 rounded-xl text-white focus:border-blue-500 transition-all duration-300"
+                            placeholder="Link name"
+                            value={link.name}
+                            onChange={(e) => handleResourceLinkChange(index, "name", e.target.value)}
+                          />
+                          <input
+                            type="text"
+                            className="md:col-span-7 w-full px-4 py-3 bg-black/60 backdrop-blur-sm border border-gray-800/70 hover:border-blue-600/50 rounded-xl text-white focus:border-blue-500 transition-all duration-300"
+                            placeholder="https://example.com"
+                            value={link.url}
+                            onChange={(e) => handleResourceLinkChange(index, "url", e.target.value)}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveResourceLink(index)}
+                            className="md:col-span-1 px-3 py-3 bg-red-600/20 text-red-300 border border-red-500/30 rounded-xl hover:bg-red-600/30 transition-all duration-300"
+                            title="Remove link"
+                          >
+                            <FiX className="w-4 h-4 mx-auto" />
+                          </button>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-xs text-gray-500">No resource links added yet.</p>
+                    )}
+                  </div>
+                </div>
+
                 {/* Content */}
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2 flex items-center gap-2">
                     <FiFileText className="w-4 h-4 text-cyan-400" />
                     Content *
                   </label>
-                  <div className="bg-black/60 backdrop-blur-sm border border-gray-800/70 hover:border-blue-600/50 rounded-xl overflow-hidden">
-                    <Editor
-                      apiKey="h2ar80nttlx4hli43ugzp4wvv9ej7q3feifsu8mqssyfga6s"
+                  <div className="blog-quill-wrapper bg-black/60 backdrop-blur-sm border border-gray-800/70 hover:border-blue-600/50 rounded-xl overflow-hidden">
+                    <ReactQuill
+                      theme="snow"
                       value={form.content}
-                      onEditorChange={handleEditorChange}
-                      init={{
-                        height: 400,
-                        menubar: false,
-                        plugins: [
-                          "advlist", "autolink", "lists", "link", "image",
-                          "charmap", "preview", "anchor", "searchreplace",
-                          "visualblocks", "code", "fullscreen", "insertdatetime",
-                          "media", "table", "code", "help", "wordcount",
-                        ],
-                        toolbar:
-                          "undo redo | blocks | bold italic underline strikethrough | " +
-                          "forecolor backcolor | alignleft aligncenter alignright alignjustify | " +
-                          "bullist numlist outdent indent | link image | removeformat | help",
-                        skin: "oxide-dark",
-                        content_css: "dark",
-                        content_style: `
-                          body { 
-                            background: #0a0a0a; 
-                            color: #f9fafb; 
-                            font-family: Inter, sans-serif; 
-                            font-size: 14px; 
-                            line-height: 1.6; 
-                          }
-                          p { margin: 0 0 12px 0; }
-                          ul, ol { margin: 0 0 12px 0; padding-left: 20px; }
-                          li { margin-bottom: 4px; }
-                          strong { font-weight: bold; }
-                          em { font-style: italic; }
-                          u { text-decoration: underline; }
-                          a { color: #60a5fa; text-decoration: underline; }
-                          h1, h2, h3, h4, h5, h6 { 
-                            color: #f9fafb; 
-                            margin: 16px 0 8px 0;
-                            font-weight: bold;
-                          }
-                          h1 { font-size: 24px; }
-                          h2 { font-size: 20px; }
-                          h3 { font-size: 18px; }
-                          h4 { font-size: 16px; }
-                          blockquote { 
-                            border-left: 4px solid #60a5fa; 
-                            padding-left: 16px; 
-                            margin: 16px 0;
-                            font-style: italic;
-                            color: #d1d5db;
-                          }
-                        `,
-                        branding: false,
-                        statusbar: false,
-                        elementpath: false,
-                      }}
+                      onChange={handleEditorChange}
+                      modules={quillModules}
+                      formats={quillFormats}
+                      className="blog-quill-editor"
+                      placeholder="Write your blog content here..."
                     />
                   </div>
                 </div>
@@ -600,7 +793,7 @@ const BlogCreate = () => {
 
                 {/* Preview Content */}
                 <div className="p-4">
-                  {form.title || featuredImage || form.content ? (
+                  {form.title || featuredImage || form.content || form.resourceLinks.length > 0 ? (
                     <div className="space-y-4">
                       {/* Featured Image Preview */}
                       {featuredImage && (
@@ -629,6 +822,20 @@ const BlogCreate = () => {
                       <h3 className="text-lg font-bold text-white">
                         {form.title || "Untitled Blog Post"}
                       </h3>
+
+                      {/* Resource Links Preview */}
+                      {form.resourceLinks.length > 0 && (
+                        <div className="flex flex-wrap gap-2">
+                          {form.resourceLinks.map((link, index) => (
+                            <span
+                              key={`preview-link-${index}`}
+                              className="px-2 py-1 rounded-full bg-cyan-600/20 border border-cyan-500/30 text-xs text-cyan-300"
+                            >
+                              {link.name || "Link"}
+                            </span>
+                          ))}
+                        </div>
+                      )}
 
                       {/* Content Preview */}
                       <div className="text-gray-400 text-sm leading-relaxed max-h-40 overflow-hidden relative">

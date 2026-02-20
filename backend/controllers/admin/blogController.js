@@ -124,7 +124,8 @@ export const createBlog = async (req, res) => {
       content,
       featuredImage,
       category,
-      status
+      status,
+      resourceLinks
     } = req.body;
     
     // Validate required fields
@@ -152,6 +153,16 @@ export const createBlog = async (req, res) => {
     const plainText = content.replace(/<[^>]*>/g, "");
     const excerpt = plainText.substring(0, 150) + (plainText.length > 150 ? "..." : "");
     
+    let normalizedResourceLinks = [];
+    try {
+      normalizedResourceLinks = normalizeResourceLinks(resourceLinks);
+    } catch (validationError) {
+      return res.status(400).json({
+        success: false,
+        message: validationError.message
+      });
+    }
+
     // Create blog - FIELDS MUST MATCH SCHEMA
     const blogData = {
       adminId: req.admin._id,
@@ -160,7 +171,8 @@ export const createBlog = async (req, res) => {
       featuredImage: featuredImage,
       category: category,
       excerpt: excerpt,
-      status: status || "published"
+      status: status || "published",
+      resourceLinks: normalizedResourceLinks
     };
     
     const blog = await Blog.create(blogData);
@@ -204,7 +216,8 @@ export const updateBlog = async (req, res) => {
       metaTitle,
       metaDescription,
       metaKeywords,
-      isFeatured
+      isFeatured,
+      resourceLinks
     } = req.body;
     
     // Find existing blog
@@ -234,6 +247,18 @@ export const updateBlog = async (req, res) => {
         });
       }
     }
+
+    let normalizedResourceLinks = null;
+    if (resourceLinks !== undefined) {
+      try {
+        normalizedResourceLinks = normalizeResourceLinks(resourceLinks);
+      } catch (validationError) {
+        return res.status(400).json({
+          success: false,
+          message: validationError.message
+        });
+      }
+    }
     
     // Handle Cloudinary image update - delete old image if new one is provided
     if (featuredImage && featuredImage !== existingBlog.featuredImage) {
@@ -260,6 +285,7 @@ export const updateBlog = async (req, res) => {
     if (metaDescription) existingBlog.metaDescription = metaDescription;
     if (metaKeywords) existingBlog.metaKeywords = Array.isArray(metaKeywords) ? metaKeywords : metaKeywords.split(",").map(keyword => keyword.trim());
     if (isFeatured !== undefined) existingBlog.isFeatured = isFeatured;
+    if (normalizedResourceLinks !== null) existingBlog.resourceLinks = normalizedResourceLinks;
     
     await existingBlog.save();
     
@@ -599,4 +625,50 @@ const extractCloudinaryPublicId = (url) => {
   } catch (error) {
     return null;
   }
+};
+
+const normalizeResourceLinks = (resourceLinks) => {
+  if (resourceLinks === undefined || resourceLinks === null) {
+    return [];
+  }
+
+  if (!Array.isArray(resourceLinks)) {
+    throw new Error("Resource links must be an array");
+  }
+
+  const normalized = [];
+
+  for (const link of resourceLinks) {
+    if (!link || typeof link !== "object") {
+      continue;
+    }
+
+    const name = String(link.name || "").trim();
+    let url = String(link.url || "").trim();
+
+    if (!name && !url) {
+      continue;
+    }
+
+    if (!name || !url) {
+      throw new Error("Each resource link must include both name and URL");
+    }
+
+    if (!/^https?:\/\//i.test(url)) {
+      url = `https://${url}`;
+    }
+
+    try {
+      new URL(url);
+    } catch (error) {
+      throw new Error(`Invalid URL for "${name}"`);
+    }
+
+    normalized.push({
+      name,
+      url
+    });
+  }
+
+  return normalized;
 };

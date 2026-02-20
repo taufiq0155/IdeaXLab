@@ -1,5 +1,22 @@
 import mongoose from "mongoose";
 
+const resourceLinkSchema = new mongoose.Schema(
+  {
+    name: {
+      type: String,
+      required: true,
+      trim: true,
+      maxlength: 50,
+    },
+    url: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+  },
+  { _id: false }
+);
+
 const blogSchema = new mongoose.Schema(
   {
     adminId: {
@@ -31,6 +48,10 @@ const blogSchema = new mongoose.Schema(
     status: {
       type: String,
       default: "published",
+    },
+    resourceLinks: {
+      type: [resourceLinkSchema],
+      default: [],
     },
   },
   {

@@ -19,6 +19,9 @@ import BlogCreate from './pages/admin/Blog/BlogCreate'
 import BlogPage from './pages/admin/Blog/BlogPage'
 import ModifyBlog from './pages/admin/Blog/ModifyBlog'
 import ModifyBlogCategory from './pages/admin/Blog/ModifyBlogCategory'
+import Profile from './pages/admin/profile'
+import GetService from './pages/admin/Service/GetService'
+import ViewService from './pages/admin/Service/ViewService'
 
 function App() {
   return (
@@ -70,6 +73,13 @@ function App() {
               <Route path="compose" element={<Contact />} />
             </Route>
               <Route path="change-password" element={<ChangePassword />} />
+              <Route path="profile" element={<Profile />} />
+
+              <Route path="services">
+                <Route index element={<Navigate to="/admin/services/get" replace />} />
+                <Route path="get" element={<GetService />} />
+                <Route path="view" element={<ViewService />} />
+              </Route>
               
               {/* Admin Management Routes */}
               <Route path="admins">

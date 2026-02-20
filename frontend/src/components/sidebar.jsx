@@ -16,7 +16,9 @@ import {
   FiFileText,      // Added for Blog
   FiFolder,        // Added for Categories
   FiEdit,          // Added for Edit
-  FiPlus           // Added for Create
+  FiPlus,          // Added for Create
+  FiBriefcase,
+  FiUpload
 } from 'react-icons/fi';
 import { useNavigate, useLocation } from 'react-router-dom';
 
@@ -32,11 +34,11 @@ export default function Sidebar({
   const [showAdminSubmenu, setShowAdminSubmenu] = useState(false);
   const [showContactSubmenu, setShowContactSubmenu] = useState(false);
   const [showBlogSubmenu, setShowBlogSubmenu] = useState(false);  // Added for Blog
+  const [showServiceSubmenu, setShowServiceSubmenu] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Load logged-in admin details from localStorage
-  useEffect(() => {
+  const loadAdminFromStorage = () => {
     const storedAdmin = localStorage.getItem('adminData');
     if (storedAdmin) {
       try {
@@ -45,8 +47,57 @@ export default function Sidebar({
         console.error('Error parsing admin data:', error);
         setAdmin(null);
       }
+    } else {
+      setAdmin(null);
     }
-  }, []);
+  };
+
+  const updateProfileImageFromAPI = async () => {
+    const token = localStorage.getItem('adminToken');
+    if (!token) return;
+
+    try {
+      const response = await fetch('http://localhost:5000/api/admin/profile', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) return;
+      if (!response.ok) return;
+
+      const data = await response.json();
+      if (!data.success || !data.data) return;
+
+      const profileImage = data.data.profileImage || "";
+      setAdmin((prev) => {
+        if (!prev) return prev;
+
+        const updated = { ...prev, profileImage };
+        localStorage.setItem('adminData', JSON.stringify(updated));
+        return updated;
+      });
+    } catch (error) {
+      // Keep sidebar stable even if profile fetch fails.
+    }
+  };
+
+  // Load logged-in admin details from localStorage and sync profile image updates.
+  useEffect(() => {
+    loadAdminFromStorage();
+    updateProfileImageFromAPI();
+
+    const handleProfileUpdated = () => {
+      loadAdminFromStorage();
+      updateProfileImageFromAPI();
+    };
+
+    window.addEventListener("admin-profile-updated", handleProfileUpdated);
+    return () => {
+      window.removeEventListener("admin-profile-updated", handleProfileUpdated);
+    };
+  }, [location.pathname]);
 
   const handleLogout = () => {
     // Remove token and admin data from localStorage
@@ -68,6 +119,7 @@ export default function Sidebar({
   const isAdminsActive = location.pathname.includes('/admin/admins');
   const isContactsActive = location.pathname.includes('/admin/contacts');
   const isBlogActive = location.pathname.includes('/admin/blog');  // Added for Blog
+  const isServiceActive = location.pathname.includes('/admin/services');
 
   return (
     <>
@@ -352,6 +404,84 @@ export default function Sidebar({
               </div>
             </li>
 
+            {/* SERVICE MANAGEMENT */}
+            <li>
+              <div>
+                <button
+                  onClick={() => {
+                    setShowServiceSubmenu(!showServiceSubmenu);
+                    if (!showServiceSubmenu) {
+                      navigate('/admin/services/get');
+                    }
+                  }}
+                  className={`flex items-center w-full rounded-xl transition-all duration-300 group ${
+                    isSidebarOpen ? 'px-4 py-3' : 'p-3 justify-center'
+                  } ${
+                    isServiceActive
+                      ? 'bg-gradient-to-r from-blue-600/30 to-cyan-600/20 text-white shadow-lg shadow-blue-500/10'
+                      : 'text-gray-400 hover:text-white hover:bg-gray-800/30'
+                  }`}
+                >
+                  <div className={`flex items-center ${isSidebarOpen ? 'space-x-4' : 'justify-center'}`}>
+                    <span className={`flex items-center justify-center w-5 h-5 ${
+                      isServiceActive
+                        ? 'text-blue-400'
+                        : 'text-gray-400 group-hover:text-blue-300'
+                    } transition-transform duration-200`}>
+                      <FiBriefcase />
+                    </span>
+                    {isSidebarOpen && (
+                      <span className="text-sm font-medium tracking-wide whitespace-nowrap">
+                        Services
+                      </span>
+                    )}
+                  </div>
+                  {isSidebarOpen && (
+                    <FiChevronDown className={`ml-auto transition-transform duration-300 ${showServiceSubmenu ? 'rotate-180' : ''}`} />
+                  )}
+                </button>
+
+                {isSidebarOpen && showServiceSubmenu && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="ml-12 mt-1 space-y-1"
+                  >
+                    <button
+                      onClick={() => {
+                        navigate('/admin/services/get');
+                        if (isMobile) setIsSidebarOpen(false);
+                      }}
+                      className={`flex items-center space-x-2 w-full px-3 py-2 rounded-lg text-sm transition-colors text-left ${
+                        location.pathname === '/admin/services/get'
+                          ? 'text-blue-400 bg-blue-900/20'
+                          : 'text-gray-400 hover:text-white hover:bg-gray-800/30'
+                      }`}
+                    >
+                      <FiUpload className="w-4 h-4" />
+                      <span>Get Service</span>
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        navigate('/admin/services/view');
+                        if (isMobile) setIsSidebarOpen(false);
+                      }}
+                      className={`flex items-center space-x-2 w-full px-3 py-2 rounded-lg text-sm transition-colors text-left ${
+                        location.pathname === '/admin/services/view'
+                          ? 'text-blue-400 bg-blue-900/20'
+                          : 'text-gray-400 hover:text-white hover:bg-gray-800/30'
+                      }`}
+                    >
+                      <FiFileText className="w-4 h-4" />
+                      <span>View Service</span>
+                    </button>
+                  </motion.div>
+                )}
+              </div>
+            </li>
+
             {/* Contact Management */}
             <li>
               <div>
@@ -539,35 +669,63 @@ export default function Sidebar({
         <div className={`border-t border-blue-900/30 ${isSidebarOpen ? 'p-4' : 'p-4'}`}>
           <div className={`flex items-center ${isSidebarOpen ? 'justify-start' : 'justify-center'}`}>
             <div className={`relative ${isSidebarOpen ? 'flex items-center w-full' : ''}`}>
-              {/* User Avatar */}
-              <div className={`relative ${isSidebarOpen ? '' : 'mx-auto'}`}>
-                <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-cyan-600 blur-md rounded-full opacity-40"></div>
-                <div className="relative w-10 h-10 rounded-full bg-gradient-to-br from-blue-600 to-cyan-600 flex items-center justify-center shadow-lg">
-                  <FiUser className="w-5 h-5 text-white" />
-                </div>
-              </div>
-
-              {/* User Info - Only shown when sidebar is open */}
-              {isSidebarOpen && (
-                <div className="flex-1 min-w-0 ml-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-bold text-white truncate">
-                        {admin?.fullName || 'Admin User'}
-                      </p>
-                      <p className="text-xs text-blue-300 font-medium truncate mt-0.5">
-                        {admin?.email || 'admin@gmail.com'}
-                      </p>
-                    </div>
-                    <button
-                      onClick={handleLogout}
-                      className="ml-3 p-2 rounded-lg hover:bg-red-900/30 transition-colors duration-300 flex-shrink-0 group"
-                      title="Logout"
-                    >
-                      <FiLogOut className="w-4 h-4 text-gray-400 group-hover:text-red-400 transition-colors duration-300" />
-                    </button>
+              <button
+                onClick={() => {
+                  navigate('/admin/profile');
+                  if (isMobile) setIsSidebarOpen(false);
+                }}
+                className={`flex items-center text-left rounded-xl transition-all duration-300 ${
+                  isSidebarOpen
+                    ? 'flex-1 p-2 hover:bg-blue-900/20 border border-transparent hover:border-blue-700/40'
+                    : 'p-1 hover:bg-blue-900/20 border border-transparent hover:border-blue-700/40'
+                }`}
+                title="Open Profile"
+              >
+                {/* User Avatar */}
+                <div className={`relative ${isSidebarOpen ? '' : 'mx-auto'}`}>
+                  <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-cyan-600 blur-md rounded-full opacity-40"></div>
+                  <div className="relative w-10 h-10 rounded-full bg-gradient-to-br from-blue-600 to-cyan-600 flex items-center justify-center shadow-lg overflow-hidden">
+                    {admin?.profileImage ? (
+                      <img
+                        src={admin.profileImage}
+                        alt={admin?.fullName || "Admin Profile"}
+                        className="w-full h-full object-cover"
+                        onError={() => {
+                          setAdmin((prev) => {
+                            if (!prev) return prev;
+                            const updated = { ...prev, profileImage: "" };
+                            localStorage.setItem('adminData', JSON.stringify(updated));
+                            return updated;
+                          });
+                        }}
+                      />
+                    ) : (
+                      <FiUser className="w-5 h-5 text-white" />
+                    )}
                   </div>
                 </div>
+
+                {/* User Info - Only shown when sidebar is open */}
+                {isSidebarOpen && (
+                  <div className="flex-1 min-w-0 ml-4">
+                    <p className="text-sm font-bold text-white truncate">
+                      {admin?.fullName || 'Admin User'}
+                    </p>
+                    <p className="text-xs text-blue-300 font-medium truncate mt-0.5">
+                      {admin?.email || 'admin@gmail.com'}
+                    </p>
+                  </div>
+                )}
+              </button>
+
+              {isSidebarOpen && (
+                <button
+                  onClick={handleLogout}
+                  className="ml-3 p-2 rounded-lg hover:bg-red-900/30 transition-colors duration-300 flex-shrink-0 group"
+                  title="Logout"
+                >
+                  <FiLogOut className="w-4 h-4 text-gray-400 group-hover:text-red-400 transition-colors duration-300" />
+                </button>
               )}
             </div>
           </div>
