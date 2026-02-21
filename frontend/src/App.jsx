@@ -1,7 +1,10 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
-import Home from './pages/Home'
+import Home from './pages/visitor/Home'
+import BlogsHome from './pages/visitor/BlogsHome'
+import TeamHome from './pages/visitor/teamHome'
+import ServiceHome from './pages/visitor/ServiceHome'
 import AdminLogin from './pages/admin/adminLogin'
 import AdminSignup from './pages/admin/adminsignup'
 import AdminDashboard from './pages/admin/adminDashboard'
@@ -22,6 +25,9 @@ import ModifyBlogCategory from './pages/admin/Blog/ModifyBlogCategory'
 import Profile from './pages/admin/profile'
 import GetService from './pages/admin/Service/GetService'
 import ViewService from './pages/admin/Service/ViewService'
+import AddEmployee from './pages/admin/Employee/AddEmployee'
+import ViewEmployee from './pages/admin/Employee/ViewEmployee'
+import ModifyEmployee from './pages/admin/Employee/ModifyEmployee'
 
 function App() {
   return (
@@ -46,6 +52,9 @@ function App() {
           <Routes>
             {/* Public Routes */}
             <Route path="/" element={<Home />} />
+            <Route path="/blogs" element={<BlogsHome />} />
+            <Route path="/services" element={<ServiceHome />} />
+            <Route path="/team" element={<TeamHome />} />
             <Route path="/admin/login" element={<AdminLogin />} />
             <Route path="/admin/signup" element={<AdminSignup />} />
             <Route path="/admin/forgot-password" element={<ForgotPassword />} />
@@ -79,6 +88,13 @@ function App() {
                 <Route index element={<Navigate to="/admin/services/get" replace />} />
                 <Route path="get" element={<GetService />} />
                 <Route path="view" element={<ViewService />} />
+              </Route>
+
+              <Route path="employees">
+                <Route index element={<Navigate to="/admin/employees/add" replace />} />
+                <Route path="add" element={<AddEmployee />} />
+                <Route path="view" element={<ViewEmployee />} />
+                <Route path="modify" element={<ModifyEmployee />} />
               </Route>
               
               {/* Admin Management Routes */}

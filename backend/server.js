@@ -10,6 +10,8 @@ import blogCategoryRoutes from "./routes/admin/blogCategoryRoutes.js";
 import blogRoutes from "./routes/admin/blogRoutes.js";
 import profileRoutes from "./routes/admin/profileRoutes.js";
 import serviceRoutes from "./routes/admin/serviceRoutes.js";
+import employeeRoutes from "./routes/admin/employeeRoutes.js";
+import publicRoutes from "./routes/public/publicRoutes.js";
 
 const app = express();
 
@@ -26,6 +28,8 @@ app.use("/api/admin/blog-categories", blogCategoryRoutes);
 app.use("/api/admin/blogs", blogRoutes);
 app.use("/api/admin/profile", profileRoutes);
 app.use("/api/admin/services", serviceRoutes);
+app.use("/api/admin/employees", employeeRoutes);
+app.use("/api/public", publicRoutes);
 
 
 const PORT = process.env.PORT || 5000;
