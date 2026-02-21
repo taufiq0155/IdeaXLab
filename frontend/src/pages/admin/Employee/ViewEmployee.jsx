@@ -21,6 +21,7 @@ const ViewEmployee = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [categoryFilter, setCategoryFilter] = useState("all");
 
   const fetchEmployees = async () => {
     const token = localStorage.getItem("adminToken");
@@ -65,17 +66,20 @@ const ViewEmployee = () => {
     const needle = searchTerm.trim().toLowerCase();
     return employees.filter((employee) => {
       const matchesStatus = statusFilter === "all" || employee.status === statusFilter;
+      const matchesCategory =
+        categoryFilter === "all" || employee.category === categoryFilter;
       const matchesSearch =
         !needle ||
         employee.fullName?.toLowerCase().includes(needle) ||
         employee.email?.toLowerCase().includes(needle) ||
         employee.designation?.toLowerCase().includes(needle) ||
         employee.department?.toLowerCase().includes(needle) ||
+        employee.category?.toLowerCase().includes(needle) ||
         employee.employeeCode?.toLowerCase().includes(needle);
 
-      return matchesStatus && matchesSearch;
+      return matchesStatus && matchesCategory && matchesSearch;
     });
-  }, [employees, searchTerm, statusFilter]);
+  }, [employees, searchTerm, statusFilter, categoryFilter]);
 
   return (
     <div className="min-h-screen bg-black relative overflow-hidden">
@@ -111,7 +115,7 @@ const ViewEmployee = () => {
         </GlassCard>
 
         <GlassCard className="p-4 mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
             <div className="relative md:col-span-2">
               <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
               <input
@@ -131,6 +135,16 @@ const ViewEmployee = () => {
               <option value="active" className="bg-gray-900 text-white">Active</option>
               <option value="on-leave" className="bg-gray-900 text-white">On Leave</option>
               <option value="inactive" className="bg-gray-900 text-white">Inactive</option>
+            </select>
+            <select
+              value={categoryFilter}
+              onChange={(e) => setCategoryFilter(e.target.value)}
+              className="w-full px-4 py-3 rounded-xl bg-black/60 border border-gray-800/70 text-white focus:border-blue-500"
+            >
+              <option value="all" className="bg-gray-900 text-white">All Teams</option>
+              <option value="research-team" className="bg-gray-900 text-white">Research Team</option>
+              <option value="development-team" className="bg-gray-900 text-white">Development Team</option>
+              <option value="innovation-team" className="bg-gray-900 text-white">Innovation Team</option>
             </select>
           </div>
         </GlassCard>
@@ -176,7 +190,10 @@ const ViewEmployee = () => {
                         <StatusBadge status={employee.status} />
                       </div>
                       <p className="text-cyan-300 text-sm">{employee.designation || "No designation"}</p>
-                      <p className="text-gray-400 text-xs">{employee.department || "No department"}</p>
+                      <p className="text-gray-400 text-xs">
+                        {employee.department || "No department"} |{" "}
+                        {formatTeamCategory(employee.category)}
+                      </p>
                     </div>
                   </div>
 
@@ -260,5 +277,11 @@ const StatusBadge = ({ status = "active" }) => {
     </span>
   );
 };
+
+const formatTeamCategory = (category = "research-team") =>
+  String(category || "research-team")
+    .split("-")
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
 
 export default ViewEmployee;

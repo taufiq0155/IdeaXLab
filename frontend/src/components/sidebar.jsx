@@ -18,7 +18,8 @@ import {
   FiEdit,          // Added for Edit
   FiPlus,          // Added for Create
   FiBriefcase,
-  FiUpload
+  FiUpload,
+  FiImage
 } from 'react-icons/fi';
 import { useNavigate, useLocation } from 'react-router-dom';
 
@@ -36,6 +37,7 @@ export default function Sidebar({
   const [showBlogSubmenu, setShowBlogSubmenu] = useState(false);  // Added for Blog
   const [showServiceSubmenu, setShowServiceSubmenu] = useState(false);
   const [showEmployeeSubmenu, setShowEmployeeSubmenu] = useState(false);
+  const [showProjectSubmenu, setShowProjectSubmenu] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -122,6 +124,7 @@ export default function Sidebar({
   const isBlogActive = location.pathname.includes('/admin/blog');  // Added for Blog
   const isServiceActive = location.pathname.includes('/admin/services');
   const isEmployeeActive = location.pathname.includes('/admin/employees');
+  const isProjectActive = location.pathname.includes('/admin/projects');
 
   return (
     <>
@@ -493,6 +496,99 @@ export default function Sidebar({
                     >
                       <FiEdit className="w-4 h-4" />
                       <span>Modify Employee</span>
+                    </button>
+                  </motion.div>
+                )}
+              </div>
+            </li>
+
+            {/* PROJECT MANAGEMENT */}
+            <li>
+              <div>
+                <button
+                  onClick={() => {
+                    setShowProjectSubmenu(!showProjectSubmenu);
+                    if (!showProjectSubmenu) {
+                      navigate('/admin/projects/add');
+                    }
+                  }}
+                  className={`flex items-center w-full rounded-xl transition-all duration-300 group ${
+                    isSidebarOpen ? 'px-4 py-3' : 'p-3 justify-center'
+                  } ${
+                    isProjectActive
+                      ? 'bg-gradient-to-r from-blue-600/30 to-cyan-600/20 text-white shadow-lg shadow-blue-500/10'
+                      : 'text-gray-400 hover:text-white hover:bg-gray-800/30'
+                  }`}
+                >
+                  <div className={`flex items-center ${isSidebarOpen ? 'space-x-4' : 'justify-center'}`}>
+                    <span className={`flex items-center justify-center w-5 h-5 ${
+                      isProjectActive
+                        ? 'text-blue-400'
+                        : 'text-gray-400 group-hover:text-blue-300'
+                    } transition-transform duration-200`}>
+                      <FiImage />
+                    </span>
+                    {isSidebarOpen && (
+                      <span className="text-sm font-medium tracking-wide whitespace-nowrap">
+                        Projects
+                      </span>
+                    )}
+                  </div>
+                  {isSidebarOpen && (
+                    <FiChevronDown className={`ml-auto transition-transform duration-300 ${showProjectSubmenu ? 'rotate-180' : ''}`} />
+                  )}
+                </button>
+
+                {isSidebarOpen && showProjectSubmenu && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="ml-12 mt-1 space-y-1"
+                  >
+                    <button
+                      onClick={() => {
+                        navigate('/admin/projects/add');
+                        if (isMobile) setIsSidebarOpen(false);
+                      }}
+                      className={`flex items-center space-x-2 w-full px-3 py-2 rounded-lg text-sm transition-colors text-left ${
+                        location.pathname === '/admin/projects/add'
+                          ? 'text-blue-400 bg-blue-900/20'
+                          : 'text-gray-400 hover:text-white hover:bg-gray-800/30'
+                      }`}
+                    >
+                      <FiPlus className="w-4 h-4" />
+                      <span>Add Project</span>
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        navigate('/admin/projects/view');
+                        if (isMobile) setIsSidebarOpen(false);
+                      }}
+                      className={`flex items-center space-x-2 w-full px-3 py-2 rounded-lg text-sm transition-colors text-left ${
+                        location.pathname === '/admin/projects/view'
+                          ? 'text-blue-400 bg-blue-900/20'
+                          : 'text-gray-400 hover:text-white hover:bg-gray-800/30'
+                      }`}
+                    >
+                      <FiImage className="w-4 h-4" />
+                      <span>View Project</span>
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        navigate('/admin/projects/modify');
+                        if (isMobile) setIsSidebarOpen(false);
+                      }}
+                      className={`flex items-center space-x-2 w-full px-3 py-2 rounded-lg text-sm transition-colors text-left ${
+                        location.pathname === '/admin/projects/modify'
+                          ? 'text-blue-400 bg-blue-900/20'
+                          : 'text-gray-400 hover:text-white hover:bg-gray-800/30'
+                      }`}
+                    >
+                      <FiEdit className="w-4 h-4" />
+                      <span>Modify Project</span>
                     </button>
                   </motion.div>
                 )}

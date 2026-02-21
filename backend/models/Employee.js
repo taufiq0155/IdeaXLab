@@ -43,6 +43,12 @@ const employeeSchema = new mongoose.Schema(
       trim: true,
       maxlength: 120,
     },
+    category: {
+      type: String,
+      enum: ["innovation-team", "research-team", "development-team"],
+      default: "research-team",
+      index: true,
+    },
     department: {
       type: String,
       default: "",
@@ -132,6 +138,11 @@ const employeeSchema = new mongoose.Schema(
       trim: true,
     },
     website: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+    otherLink: {
       type: String,
       default: "",
       trim: true,

@@ -1,6 +1,7 @@
 import Blog from "../../models/Blog.js";
 import BlogCategory from "../../models/BlogCategory.js";
 import Employee from "../../models/Employee.js";
+import Project from "../../models/Project.js";
 import Service from "../../models/Service.js";
 import Admin from "../../models/Admin.js";
 import cloudinary from "../../utils/cloudinary.js";
@@ -110,9 +111,28 @@ export const getPublicBlogCategories = async (req, res) => {
 // @access  Public
 export const getPublicTeam = async (req, res) => {
   try {
-    const team = await Employee.find({ status: "active" })
-      .select("fullName email designation department profileImage bio skills")
-      .sort({ createdAt: -1 })
+    const { category = "all" } = req.query;
+
+    const query = { status: "active" };
+    if (category !== "all") {
+      const normalizedCategory = normalizeTeamCategory(category);
+      if (normalizedCategory === "research-team") {
+        query.$or = [
+          { category: "research-team" },
+          { category: { $exists: false } },
+          { category: null },
+          { category: "" },
+        ];
+      } else {
+        query.category = normalizedCategory;
+      }
+    }
+
+    const team = await Employee.find(query)
+      .select(
+        "fullName email designation department profileImage bio skills category linkedin github website otherLink"
+      )
+      .sort({ designation: 1, fullName: 1, createdAt: -1 })
       .lean();
 
     return res.status(200).json({
@@ -126,6 +146,51 @@ export const getPublicTeam = async (req, res) => {
       error: error.message,
     });
   }
+};
+
+// @desc    Get published projects for visitor pages
+// @route   GET /api/public/projects
+// @access  Public
+export const getPublicProjects = async (req, res) => {
+  try {
+    const { search = "" } = req.query;
+    const query = { status: "published" };
+
+    if (search) {
+      query.$or = [
+        { title: { $regex: search, $options: "i" } },
+        { description: { $regex: search, $options: "i" } },
+        { "links.label": { $regex: search, $options: "i" } },
+      ];
+    }
+
+    const projects = await Project.find(query)
+      .select("title description images links createdAt")
+      .sort({ createdAt: -1 })
+      .lean();
+
+    return res.status(200).json({
+      success: true,
+      data: projects,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch public projects",
+      error: error.message,
+    });
+  }
+};
+
+const normalizeTeamCategory = (value) => {
+  const cleaned = String(value || "").trim().toLowerCase();
+  if (cleaned === "innovation team") return "innovation-team";
+  if (cleaned === "research team") return "research-team";
+  if (cleaned === "development team") return "development-team";
+  if (["innovation-team", "research-team", "development-team"].includes(cleaned)) {
+    return cleaned;
+  }
+  return "research-team";
 };
 
 const allowedMimeTypes = new Set([

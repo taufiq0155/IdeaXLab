@@ -4,6 +4,7 @@ import {
   createPublicServiceRequest,
   getPublicBlogCategories,
   getPublicBlogs,
+  getPublicProjects,
   getPublicTeam,
   uploadPublicServiceDocuments,
 } from "../../controllers/public/publicController.js";
@@ -21,6 +22,7 @@ const upload = multer({
 router.get("/blogs", getPublicBlogs);
 router.get("/blog-categories", getPublicBlogCategories);
 router.get("/team", getPublicTeam);
+router.get("/projects", getPublicProjects);
 router.post(
   "/services/upload-documents",
   (req, res, next) => {

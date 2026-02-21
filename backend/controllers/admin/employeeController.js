@@ -128,7 +128,7 @@ export const createEmployee = async (req, res) => {
 // @access  Private (Admin only)
 export const getEmployees = async (req, res) => {
   try {
-    const { search = "", status = "all", department = "all" } = req.query;
+    const { search = "", status = "all", department = "all", category = "all" } = req.query;
 
     const query = { adminId: req.admin._id };
 
@@ -140,14 +140,31 @@ export const getEmployees = async (req, res) => {
       query.department = department;
     }
 
+    if (category !== "all") {
+      const normalizedCategory = normalizeCategory(category);
+      if (normalizedCategory === "research-team") {
+        query.$or = [
+          { category: "research-team" },
+          { category: { $exists: false } },
+          { category: null },
+          { category: "" },
+        ];
+      } else {
+        query.category = normalizedCategory;
+      }
+    }
+
     if (search) {
-      query.$or = [
+      const searchConditions = [
         { fullName: { $regex: search, $options: "i" } },
         { email: { $regex: search, $options: "i" } },
         { designation: { $regex: search, $options: "i" } },
         { department: { $regex: search, $options: "i" } },
+        { category: { $regex: search, $options: "i" } },
         { employeeCode: { $regex: search, $options: "i" } },
       ];
+      query.$and = query.$and || [];
+      query.$and.push({ $or: searchConditions });
     }
 
     const employees = await Employee.find(query).sort({ createdAt: -1 }).lean();
@@ -349,6 +366,17 @@ const normalizeYears = (value) => {
   return numeric;
 };
 
+const normalizeCategory = (value) => {
+  const cleaned = sanitizeString(value).toLowerCase();
+  if (cleaned === "innovation team") return "innovation-team";
+  if (cleaned === "research team") return "research-team";
+  if (cleaned === "development team") return "development-team";
+  if (["innovation-team", "research-team", "development-team"].includes(cleaned)) {
+    return cleaned;
+  }
+  return "research-team";
+};
+
 const buildEmployeePayload = (body) => {
   const code = sanitizeString(body.employeeCode);
 
@@ -359,6 +387,7 @@ const buildEmployeePayload = (body) => {
     profileImage: sanitizeString(body.profileImage),
     profileImagePublicId: sanitizeString(body.profileImagePublicId),
     designation: sanitizeString(body.designation),
+    category: normalizeCategory(body.category),
     department: sanitizeString(body.department),
     employeeCode: code || undefined,
     employmentType: sanitizeString(body.employmentType) || "full-time",
@@ -376,6 +405,7 @@ const buildEmployeePayload = (body) => {
     linkedin: normalizeOptionalUrl(body.linkedin),
     github: normalizeOptionalUrl(body.github),
     website: normalizeOptionalUrl(body.website),
+    otherLink: normalizeOptionalUrl(body.otherLink),
   };
 };
 

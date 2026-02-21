@@ -31,6 +31,7 @@ const initialForm = {
   profileImage: "",
   profileImagePublicId: "",
   designation: "",
+  category: "research-team",
   department: "",
   employeeCode: "",
   employmentType: "full-time",
@@ -48,6 +49,7 @@ const initialForm = {
   linkedin: "",
   github: "",
   website: "",
+  otherLink: "",
 };
 
 const ModifyEmployee = () => {
@@ -146,6 +148,7 @@ const ModifyEmployee = () => {
         profileImage: employee.profileImage || "",
         profileImagePublicId: employee.profileImagePublicId || "",
         designation: employee.designation || "",
+        category: employee.category || "research-team",
         department: employee.department || "",
         employeeCode: employee.employeeCode || "",
         employmentType: employee.employmentType || "full-time",
@@ -163,6 +166,7 @@ const ModifyEmployee = () => {
         linkedin: employee.linkedin || "",
         github: employee.github || "",
         website: employee.website || "",
+        otherLink: employee.otherLink || "",
       });
       setSkillInput("");
     } catch (error) {
@@ -180,7 +184,8 @@ const ModifyEmployee = () => {
         employee.fullName?.toLowerCase().includes(needle) ||
         employee.email?.toLowerCase().includes(needle) ||
         employee.designation?.toLowerCase().includes(needle) ||
-        employee.department?.toLowerCase().includes(needle)
+        employee.department?.toLowerCase().includes(needle) ||
+        employee.category?.toLowerCase().includes(needle)
       );
     });
   }, [employees, searchTerm]);
@@ -415,6 +420,9 @@ const ModifyEmployee = () => {
                           <div className="min-w-0">
                             <p className="text-sm text-white font-medium truncate">{employee.fullName}</p>
                             <p className="text-xs text-cyan-300 truncate">{employee.designation}</p>
+                            <p className="text-[11px] text-gray-400 truncate">
+                              {String(employee.category || "research-team").replace("-", " ")}
+                            </p>
                           </div>
                         </div>
                       </button>
@@ -543,7 +551,17 @@ const ModifyEmployee = () => {
                       />
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <SelectField
+                        label="Team Category"
+                        value={form.category}
+                        onChange={(value) => handleChange("category", value)}
+                        options={[
+                          { label: "Research Team", value: "research-team" },
+                          { label: "Development Team", value: "development-team" },
+                          { label: "Innovation Team", value: "innovation-team" },
+                        ]}
+                      />
                       <SelectField
                         label="Employment Type"
                         value={form.employmentType}
@@ -648,7 +666,7 @@ const ModifyEmployee = () => {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                       <InputField
                         icon={<FiLinkedin className="w-4 h-4 text-cyan-400" />}
                         label="LinkedIn"
@@ -666,6 +684,12 @@ const ModifyEmployee = () => {
                         label="Website"
                         value={form.website}
                         onChange={(value) => handleChange("website", value)}
+                      />
+                      <InputField
+                        icon={<FiGlobe className="w-4 h-4 text-cyan-400" />}
+                        label="Other Link"
+                        value={form.otherLink}
+                        onChange={(value) => handleChange("otherLink", value)}
                       />
                     </div>
 

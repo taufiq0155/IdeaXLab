@@ -5,6 +5,7 @@ import Home from './pages/visitor/Home'
 import BlogsHome from './pages/visitor/BlogsHome'
 import TeamHome from './pages/visitor/teamHome'
 import ServiceHome from './pages/visitor/ServiceHome'
+import ProjectHome from './pages/visitor/projectHome'
 import AdminLogin from './pages/admin/adminLogin'
 import AdminSignup from './pages/admin/adminsignup'
 import AdminDashboard from './pages/admin/adminDashboard'
@@ -28,6 +29,9 @@ import ViewService from './pages/admin/Service/ViewService'
 import AddEmployee from './pages/admin/Employee/AddEmployee'
 import ViewEmployee from './pages/admin/Employee/ViewEmployee'
 import ModifyEmployee from './pages/admin/Employee/ModifyEmployee'
+import AddProject from './pages/admin/Project/AddProject'
+import ViewProject from './pages/admin/Project/ViewProject'
+import ModifyProject from './pages/admin/Project/ModifyProject'
 
 function App() {
   return (
@@ -53,8 +57,10 @@ function App() {
             {/* Public Routes */}
             <Route path="/" element={<Home />} />
             <Route path="/blogs" element={<BlogsHome />} />
+            <Route path="/projects" element={<ProjectHome />} />
             <Route path="/services" element={<ServiceHome />} />
             <Route path="/team" element={<TeamHome />} />
+            <Route path="/team/:category" element={<TeamHome />} />
             <Route path="/admin/login" element={<AdminLogin />} />
             <Route path="/admin/signup" element={<AdminSignup />} />
             <Route path="/admin/forgot-password" element={<ForgotPassword />} />
@@ -95,6 +101,13 @@ function App() {
                 <Route path="add" element={<AddEmployee />} />
                 <Route path="view" element={<ViewEmployee />} />
                 <Route path="modify" element={<ModifyEmployee />} />
+              </Route>
+
+              <Route path="projects">
+                <Route index element={<Navigate to="/admin/projects/add" replace />} />
+                <Route path="add" element={<AddProject />} />
+                <Route path="view" element={<ViewProject />} />
+                <Route path="modify" element={<ModifyProject />} />
               </Route>
               
               {/* Admin Management Routes */}

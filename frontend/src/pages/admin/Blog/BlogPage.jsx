@@ -11,6 +11,8 @@ import {
   FiClock,
   FiArrowLeft,
   FiLink,
+  FiChevronLeft,
+  FiChevronRight,
 } from "react-icons/fi";
 import { toast, Toaster } from "react-hot-toast";
 import { motion, AnimatePresence } from "framer-motion";
@@ -19,6 +21,7 @@ import AnimatedCanvas from "../../../components/animations/animatedCanvas";
 import GlassCard from "../../../components/ui/GlassCard";
 
 const BlogPage = () => {
+  const PAGE_SIZE = 9;
   const navigate = useNavigate();
   const [blogs, setBlogs] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -30,6 +33,7 @@ const BlogPage = () => {
   const [deleteLoading, setDeleteLoading] = useState(null);
   const [selectedBlog, setSelectedBlog] = useState(null);
   const [showBlogDetail, setShowBlogDetail] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
 
   // Fetch blogs and categories - FIXED to match BlogCreate pattern
   useEffect(() => {
@@ -156,6 +160,22 @@ const BlogPage = () => {
     
     return matchesSearch && matchesCategory && matchesStatus;
   });
+
+  const totalPages = Math.max(1, Math.ceil(filteredBlogs.length / PAGE_SIZE));
+  const paginatedBlogs = filteredBlogs.slice(
+    (currentPage - 1) * PAGE_SIZE,
+    currentPage * PAGE_SIZE
+  );
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, selectedCategory, selectedStatus]);
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
 
   // Handle delete
   const handleDelete = async (blogId) => {
@@ -575,7 +595,7 @@ const BlogPage = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <AnimatePresence>
             {filteredBlogs.length > 0 ? (
-              filteredBlogs.map((blog, index) => {
+              paginatedBlogs.map((blog, index) => {
                 const resourceLinks = getResourceLinks(blog);
 
                 return (
@@ -734,6 +754,45 @@ const BlogPage = () => {
             )}
           </AnimatePresence>
         </div>
+
+        {filteredBlogs.length > 0 && totalPages > 1 && (
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
+            <button
+              type="button"
+              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+              className="inline-flex items-center gap-1 px-3 py-2 rounded-lg text-sm border border-gray-700 text-gray-300 hover:bg-blue-900/20 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <FiChevronLeft className="w-4 h-4" />
+              Prev
+            </button>
+
+            {Array.from({ length: totalPages }, (_, idx) => idx + 1).map((page) => (
+              <button
+                key={`admin-blog-page-${page}`}
+                type="button"
+                onClick={() => setCurrentPage(page)}
+                className={`px-3 py-2 rounded-lg text-sm border ${
+                  currentPage === page
+                    ? "bg-blue-900/40 border-blue-700/50 text-white"
+                    : "border-gray-700 text-gray-300 hover:bg-blue-900/20"
+                }`}
+              >
+                {page}
+              </button>
+            ))}
+
+            <button
+              type="button"
+              onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+              disabled={currentPage === totalPages}
+              className="inline-flex items-center gap-1 px-3 py-2 rounded-lg text-sm border border-gray-700 text-gray-300 hover:bg-blue-900/20 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Next
+              <FiChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Bottom Gradient */}

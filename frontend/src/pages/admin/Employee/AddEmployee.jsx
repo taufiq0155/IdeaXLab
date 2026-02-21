@@ -29,6 +29,7 @@ const initialForm = {
   profileImage: "",
   profileImagePublicId: "",
   designation: "",
+  category: "research-team",
   department: "",
   employeeCode: "",
   employmentType: "full-time",
@@ -46,6 +47,7 @@ const initialForm = {
   linkedin: "",
   github: "",
   website: "",
+  otherLink: "",
 };
 
 const AddEmployee = () => {
@@ -341,7 +343,17 @@ const AddEmployee = () => {
                   />
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <SelectField
+                    label="Team Category"
+                    value={form.category}
+                    onChange={(value) => handleChange("category", value)}
+                    options={[
+                      { label: "Research Team", value: "research-team" },
+                      { label: "Development Team", value: "development-team" },
+                      { label: "Innovation Team", value: "innovation-team" },
+                    ]}
+                  />
                   <SelectField
                     label="Employment Type"
                     value={form.employmentType}
@@ -461,7 +473,7 @@ const AddEmployee = () => {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <InputField
                     icon={<FiLinkedin className="w-4 h-4 text-cyan-400" />}
                     label="LinkedIn"
@@ -481,6 +493,13 @@ const AddEmployee = () => {
                     label="Website"
                     value={form.website}
                     onChange={(value) => handleChange("website", value)}
+                    placeholder="https://..."
+                  />
+                  <InputField
+                    icon={<FiGlobe className="w-4 h-4 text-cyan-400" />}
+                    label="Other Link"
+                    value={form.otherLink}
+                    onChange={(value) => handleChange("otherLink", value)}
                     placeholder="https://..."
                   />
                 </div>
@@ -535,6 +554,10 @@ const AddEmployee = () => {
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-2 mt-4">
+                  <Badge
+                    label="Team"
+                    value={String(form.category || "research-team").replace("-", " ")}
+                  />
                   <Badge label="Department" value={form.department || "N/A"} />
                   <Badge label="Status" value={form.status || "active"} />
                   <Badge label="Type" value={form.employmentType || "full-time"} />
