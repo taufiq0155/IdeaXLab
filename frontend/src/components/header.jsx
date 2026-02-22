@@ -237,6 +237,7 @@ export default function Header({
     { label: "Projects", path: "/admin/projects/view" },
     { label: "Innovations", path: "/admin/innovations/view" },
     { label: "Research", path: "/admin/research/view" },
+    { label: "News", path: "/admin/news/view" },
     { label: "All Admins", path: "/admin/admins/all" },
     { label: "Pending Admins", path: "/admin/admins/pending" },
     { label: "Change Password", path: "/admin/change-password" },

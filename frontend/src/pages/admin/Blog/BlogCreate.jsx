@@ -442,7 +442,7 @@ const BlogCreate = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-black relative overflow-hidden">
+      <div className="min-h-screen bg-black relative overflow-x-hidden">
         <AnimatedCanvas />
         <div className="relative z-10 h-full flex items-center justify-center">
           <div className="flex flex-col items-center">
@@ -464,7 +464,7 @@ const BlogCreate = () => {
   }
 
   return (
-    <div className="min-h-screen bg-black relative overflow-hidden">
+    <div className="min-h-screen bg-black relative overflow-x-hidden">
       <Toaster 
         position="top-right"
         toastOptions={{
@@ -770,8 +770,8 @@ const BlogCreate = () => {
           </div>
 
           {/* Right Column - Live Preview */}
-          <div className="lg:col-span-1">
-            <GlassCard className="p-6 sticky top-6">
+          <div className="lg:col-span-1 self-start lg:sticky lg:top-24">
+            <GlassCard className="p-6">
               <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
                 <FiEye className="w-5 h-5 text-cyan-400" />
                 Live Preview

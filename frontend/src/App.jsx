@@ -6,6 +6,9 @@ import BlogsHome from './pages/visitor/BlogsHome'
 import TeamHome from './pages/visitor/teamHome'
 import ServiceHome from './pages/visitor/ServiceHome'
 import ProjectHome from './pages/visitor/projectHome'
+import ResearchHome from './pages/visitor/researchHome'
+import InnovationHome from './pages/visitor/innovationHome'
+import NewsHome from './pages/visitor/newHome'
 import AdminLogin from './pages/admin/adminLogin'
 import AdminSignup from './pages/admin/adminsignup'
 import AdminDashboard from './pages/admin/adminDashboard'
@@ -38,6 +41,9 @@ import ModifyInnovation from './pages/admin/Innovation/ModifyInnovation'
 import AddResearch from './pages/admin/Research/AddResearch'
 import ViewResearch from './pages/admin/Research/ViewResearch'
 import ModifyResearch from './pages/admin/Research/ModifyResearch'
+import AddNews from './pages/admin/News/AddNews'
+import ViewNews from './pages/admin/News/ViewNews'
+import ModifyNews from './pages/admin/News/ModifyNews'
 
 function App() {
   return (
@@ -64,6 +70,9 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/blogs" element={<BlogsHome />} />
             <Route path="/projects" element={<ProjectHome />} />
+            <Route path="/research" element={<ResearchHome />} />
+            <Route path="/innovation" element={<InnovationHome />} />
+            <Route path="/news" element={<NewsHome />} />
             <Route path="/services" element={<ServiceHome />} />
             <Route path="/team" element={<TeamHome />} />
             <Route path="/team/:category" element={<TeamHome />} />
@@ -128,6 +137,13 @@ function App() {
                 <Route path="add" element={<AddResearch />} />
                 <Route path="view" element={<ViewResearch />} />
                 <Route path="modify" element={<ModifyResearch />} />
+              </Route>
+
+              <Route path="news">
+                <Route index element={<Navigate to="/admin/news/add" replace />} />
+                <Route path="add" element={<AddNews />} />
+                <Route path="view" element={<ViewNews />} />
+                <Route path="modify" element={<ModifyNews />} />
               </Route>
               
               {/* Admin Management Routes */}

@@ -152,7 +152,7 @@ const AddResearch = () => {
   };
 
   return (
-    <div className="min-h-screen bg-black relative overflow-hidden">
+    <div className="min-h-screen bg-black relative overflow-x-hidden">
       <Toaster
         position="top-right"
         toastOptions={{
@@ -362,8 +362,8 @@ const AddResearch = () => {
             </GlassCard>
           </div>
 
-          <div>
-            <GlassCard className="p-6 sticky top-6">
+          <div className="self-start lg:sticky lg:top-24">
+            <GlassCard className="p-6">
               <h3 className="text-xl font-bold text-white mb-4">Live Preview</h3>
               <div className="rounded-2xl bg-black/50 border border-gray-800/70 p-4">
                 <h4 className="text-white font-semibold line-clamp-2">

@@ -4,7 +4,10 @@ import {
   createPublicServiceRequest,
   getPublicBlogCategories,
   getPublicBlogs,
+  getPublicInnovations,
+  getPublicNews,
   getPublicProjects,
+  getPublicResearch,
   getPublicTeam,
   uploadPublicServiceDocuments,
 } from "../../controllers/public/publicController.js";
@@ -23,6 +26,9 @@ router.get("/blogs", getPublicBlogs);
 router.get("/blog-categories", getPublicBlogCategories);
 router.get("/team", getPublicTeam);
 router.get("/projects", getPublicProjects);
+router.get("/innovations", getPublicInnovations);
+router.get("/research", getPublicResearch);
+router.get("/news", getPublicNews);
 router.post(
   "/services/upload-documents",
   (req, res, next) => {

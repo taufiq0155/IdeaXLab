@@ -171,7 +171,7 @@ const AddProject = () => {
   };
 
   return (
-    <div className="min-h-screen bg-black relative overflow-hidden">
+    <div className="min-h-screen bg-black relative overflow-x-hidden">
       <Toaster
         position="top-right"
         toastOptions={{
@@ -354,8 +354,8 @@ const AddProject = () => {
             </GlassCard>
           </div>
 
-          <div>
-            <GlassCard className="p-6 sticky top-6">
+          <div className="self-start lg:sticky lg:top-24">
+            <GlassCard className="p-6">
               <h3 className="text-xl font-bold text-white mb-4">Live Preview</h3>
               <div className="rounded-2xl bg-black/50 border border-gray-800/70 p-4">
                 <div className="relative rounded-xl overflow-hidden border border-gray-800/70 bg-black/60">

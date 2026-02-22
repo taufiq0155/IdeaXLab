@@ -42,6 +42,7 @@ export default function Sidebar({
   const [showProjectSubmenu, setShowProjectSubmenu] = useState(false);
   const [showInnovationSubmenu, setShowInnovationSubmenu] = useState(false);
   const [showResearchSubmenu, setShowResearchSubmenu] = useState(false);
+  const [showNewsSubmenu, setShowNewsSubmenu] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -131,6 +132,7 @@ export default function Sidebar({
   const isProjectActive = location.pathname.includes('/admin/projects');
   const isInnovationActive = location.pathname.includes('/admin/innovations');
   const isResearchActive = location.pathname.includes('/admin/research');
+  const isNewsActive = location.pathname.includes('/admin/news');
 
   return (
     <>
@@ -781,6 +783,99 @@ export default function Sidebar({
                     >
                       <FiEdit className="w-4 h-4" />
                       <span>Modify Research</span>
+                    </button>
+                  </motion.div>
+                )}
+              </div>
+            </li>
+
+            {/* NEWS MANAGEMENT */}
+            <li>
+              <div>
+                <button
+                  onClick={() => {
+                    setShowNewsSubmenu(!showNewsSubmenu);
+                    if (!showNewsSubmenu) {
+                      navigate('/admin/news/add');
+                    }
+                  }}
+                  className={`flex items-center w-full rounded-xl transition-all duration-300 group ${
+                    isSidebarOpen ? 'px-4 py-3' : 'p-3 justify-center'
+                  } ${
+                    isNewsActive
+                      ? 'bg-gradient-to-r from-blue-600/30 to-cyan-600/20 text-white shadow-lg shadow-blue-500/10'
+                      : 'text-gray-400 hover:text-white hover:bg-gray-800/30'
+                  }`}
+                >
+                  <div className={`flex items-center ${isSidebarOpen ? 'space-x-4' : 'justify-center'}`}>
+                    <span className={`flex items-center justify-center w-5 h-5 ${
+                      isNewsActive
+                        ? 'text-blue-400'
+                        : 'text-gray-400 group-hover:text-blue-300'
+                    } transition-transform duration-200`}>
+                      <FiFileText />
+                    </span>
+                    {isSidebarOpen && (
+                      <span className="text-sm font-medium tracking-wide whitespace-nowrap">
+                        News
+                      </span>
+                    )}
+                  </div>
+                  {isSidebarOpen && (
+                    <FiChevronDown className={`ml-auto transition-transform duration-300 ${showNewsSubmenu ? 'rotate-180' : ''}`} />
+                  )}
+                </button>
+
+                {isSidebarOpen && showNewsSubmenu && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="ml-12 mt-1 space-y-1"
+                  >
+                    <button
+                      onClick={() => {
+                        navigate('/admin/news/add');
+                        if (isMobile) setIsSidebarOpen(false);
+                      }}
+                      className={`flex items-center space-x-2 w-full px-3 py-2 rounded-lg text-sm transition-colors text-left ${
+                        location.pathname === '/admin/news/add'
+                          ? 'text-blue-400 bg-blue-900/20'
+                          : 'text-gray-400 hover:text-white hover:bg-gray-800/30'
+                      }`}
+                    >
+                      <FiPlus className="w-4 h-4" />
+                      <span>Add News</span>
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        navigate('/admin/news/view');
+                        if (isMobile) setIsSidebarOpen(false);
+                      }}
+                      className={`flex items-center space-x-2 w-full px-3 py-2 rounded-lg text-sm transition-colors text-left ${
+                        location.pathname === '/admin/news/view'
+                          ? 'text-blue-400 bg-blue-900/20'
+                          : 'text-gray-400 hover:text-white hover:bg-gray-800/30'
+                      }`}
+                    >
+                      <FiFileText className="w-4 h-4" />
+                      <span>View News</span>
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        navigate('/admin/news/modify');
+                        if (isMobile) setIsSidebarOpen(false);
+                      }}
+                      className={`flex items-center space-x-2 w-full px-3 py-2 rounded-lg text-sm transition-colors text-left ${
+                        location.pathname === '/admin/news/modify'
+                          ? 'text-blue-400 bg-blue-900/20'
+                          : 'text-gray-400 hover:text-white hover:bg-gray-800/30'
+                      }`}
+                    >
+                      <FiEdit className="w-4 h-4" />
+                      <span>Modify News</span>
                     </button>
                   </motion.div>
                 )}

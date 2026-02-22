@@ -22,6 +22,9 @@ const VisitorHeader = () => {
     { label: "Home", to: "/" },
     { label: "Blog", to: "/blogs" },
     { label: "Projects", to: "/projects" },
+    { label: "Research", to: "/research" },
+    { label: "Innovation", to: "/innovation" },
+    { label: "News", to: "/news" },
     { label: "Services", to: "/services" },
     { label: "Contact", to: "/#contact" },
   ];

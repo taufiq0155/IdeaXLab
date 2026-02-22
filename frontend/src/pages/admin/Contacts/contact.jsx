@@ -129,7 +129,7 @@ const Contact = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-black relative overflow-hidden">
+      <div className="min-h-screen bg-black relative overflow-x-hidden">
         <AnimatedCanvas />
         <div className="relative z-10 p-4 md:p-6 flex items-center justify-center h-screen">
           <div className="text-white text-xl">Loading...</div>
@@ -139,7 +139,7 @@ const Contact = () => {
   }
 
   return (
-    <div className="min-h-screen bg-black relative overflow-hidden">
+    <div className="min-h-screen bg-black relative overflow-x-hidden">
       <Toaster 
         position="top-right"
         toastOptions={{
@@ -359,7 +359,7 @@ const Contact = () => {
           </div>
 
           {/* Right Column */}
-          <div className="space-y-6">
+          <div className="space-y-6 lg:sticky lg:top-24 self-start">
             {/* Contact Information Card */}
             <GlassCard className="p-6">
               <h3 className="text-white font-semibold mb-4 flex items-center gap-2">

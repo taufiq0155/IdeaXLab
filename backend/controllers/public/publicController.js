@@ -4,6 +4,9 @@ import Employee from "../../models/Employee.js";
 import Project from "../../models/Project.js";
 import Service from "../../models/Service.js";
 import Admin from "../../models/Admin.js";
+import Innovation from "../../models/Innovation.js";
+import Research from "../../models/Research.js";
+import News from "../../models/News.js";
 import cloudinary from "../../utils/cloudinary.js";
 import { Readable } from "stream";
 import mongoose from "mongoose";
@@ -182,6 +185,143 @@ export const getPublicProjects = async (req, res) => {
   }
 };
 
+// @desc    Get public innovations for visitor pages
+// @route   GET /api/public/innovations
+// @access  Public
+export const getPublicInnovations = async (req, res) => {
+  try {
+    const { search = "", status = "all" } = req.query;
+    const query = {};
+
+    if (status !== "all") {
+      query.developmentStatus = String(status || "").trim().toLowerCase();
+    }
+
+    if (search) {
+      query.$or = [
+        { innovationTitle: { $regex: search, $options: "i" } },
+        { problemStatement: { $regex: search, $options: "i" } },
+        { proposedIotSolution: { $regex: search, $options: "i" } },
+        { "links.label": { $regex: search, $options: "i" } },
+      ];
+    }
+
+    const innovations = await Innovation.find(query)
+      .select(
+        "innovationTitle problemStatement proposedIotSolution technologiesUsed developmentStatus links createdAt"
+      )
+      .sort({ createdAt: -1 })
+      .lean();
+
+    return res.status(200).json({
+      success: true,
+      data: innovations,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch public innovations",
+      error: error.message,
+    });
+  }
+};
+
+// @desc    Get public research items for visitor pages
+// @route   GET /api/public/research
+// @access  Public
+export const getPublicResearch = async (req, res) => {
+  try {
+    const { search = "", domain = "all", publicationType = "all" } = req.query;
+    const query = {};
+
+    if (domain !== "all") {
+      query.domain = {
+        $regex: `^${escapeRegex(String(domain || "").trim())}$`,
+        $options: "i",
+      };
+    }
+
+    if (publicationType !== "all") {
+      query.publicationType = String(publicationType || "").trim().toLowerCase();
+    }
+
+    if (search) {
+      query.$or = [
+        { title: { $regex: search, $options: "i" } },
+        { description: { $regex: search, $options: "i" } },
+        { domain: { $regex: search, $options: "i" } },
+        { authors: { $elemMatch: { $regex: search, $options: "i" } } },
+      ];
+    }
+
+    const research = await Research.find(query)
+      .select("title description domain authors publishDate publicationType links createdAt")
+      .sort({ publishDate: -1, createdAt: -1 })
+      .lean();
+
+    return res.status(200).json({
+      success: true,
+      data: research,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch public research",
+      error: error.message,
+    });
+  }
+};
+
+// @desc    Get public news items for visitor pages
+// @route   GET /api/public/news
+// @access  Public
+export const getPublicNews = async (req, res) => {
+  try {
+    const { search = "", category = "all", year = "all", sortBy = "date", sortOrder = "desc" } =
+      req.query;
+    const query = {};
+
+    if (category !== "all") {
+      query.category = {
+        $regex: `^${escapeRegex(String(category || "").trim())}$`,
+        $options: "i",
+      };
+    }
+
+    const normalizedYear = Number(year);
+    if (year !== "all" && Number.isFinite(normalizedYear)) {
+      query.year = normalizedYear;
+    }
+
+    if (search) {
+      query.$or = [
+        { title: { $regex: search, $options: "i" } },
+        { category: { $regex: search, $options: "i" } },
+        { description: { $regex: search, $options: "i" } },
+      ];
+    }
+
+    const field = mapNewsSortField(String(sortBy || "").trim().toLowerCase());
+    const direction = String(sortOrder || "").trim().toLowerCase() === "asc" ? 1 : -1;
+
+    const news = await News.find(query)
+      .select("title date category year description createdAt")
+      .sort({ [field]: direction, createdAt: -1 })
+      .lean();
+
+    return res.status(200).json({
+      success: true,
+      data: news,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch public news",
+      error: error.message,
+    });
+  }
+};
+
 const normalizeTeamCategory = (value) => {
   const cleaned = String(value || "").trim().toLowerCase();
   if (cleaned === "innovation team") return "innovation-team";
@@ -191,6 +331,15 @@ const normalizeTeamCategory = (value) => {
     return cleaned;
   }
   return "research-team";
+};
+
+const escapeRegex = (value) => String(value || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+const mapNewsSortField = (value) => {
+  if (value === "year") return "year";
+  if (value === "category") return "category";
+  if (value === "title") return "title";
+  return "date";
 };
 
 const allowedMimeTypes = new Set([
