@@ -24,8 +24,10 @@ import { toast, Toaster } from "react-hot-toast";
 import GlassCard from "../../../components/ui/GlassCard";
 import StatsCard from "../../../components/ui/StatsCard";
 import AnimatedCanvas from "../../../components/animations/animatedCanvas";
+import { useLocation } from "react-router-dom";
 
 const ContactedUser = () => {
+  const location = useLocation();
   const [selectedMessage, setSelectedMessage] = useState(null);
   const [replyText, setReplyText] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -50,6 +52,7 @@ const ContactedUser = () => {
   const [messageToDelete, setMessageToDelete] = useState(null);
   const [showBulkActions, setShowBulkActions] = useState(false);
   const [isBulkOperating, setIsBulkOperating] = useState(false);
+  const preselectContactId = new URLSearchParams(location.search).get("contactId") || "";
 
   // Stats for dashboard
   const [dashboardStats, setDashboardStats] = useState([
@@ -200,6 +203,38 @@ const ContactedUser = () => {
     }
   };
 
+  const fetchContactById = async (contactId) => {
+    if (!contactId) return;
+    try {
+      const token = getToken();
+      if (!token) return;
+
+      const response = await fetch(`http://localhost:5000/api/contacts/${contactId}`, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+      });
+
+      const contentType = response.headers.get("content-type") || "";
+      if (!contentType.includes("application/json")) return;
+      const data = await response.json();
+      if (!response.ok || !data.success || !data.data) return;
+
+      const target = data.data;
+      setSelectedMessage(target);
+      setContactedUsers((prev) => {
+        const exists = prev.some((item) => item._id === target._id);
+        if (exists) {
+          return prev.map((item) => (item._id === target._id ? target : item));
+        }
+        return [target, ...prev];
+      });
+    } catch (error) {
+      // Do not block page load on preselect failure.
+    }
+  };
+
   // Fetch dashboard stats
   const fetchDashboardStats = async () => {
     try {
@@ -229,9 +264,12 @@ const ContactedUser = () => {
     const initData = async () => {
       await fetchContactedUsers(1, true);
       await fetchDashboardStats();
+      if (preselectContactId) {
+        await fetchContactById(preselectContactId);
+      }
     };
     initData();
-  }, [searchTerm, statusFilter, priorityFilter, sortBy, sortOrder]);
+  }, [searchTerm, statusFilter, priorityFilter, sortBy, sortOrder, preselectContactId]);
 
   // Handle reply submission
   const handleReply = async (e) => {

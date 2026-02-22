@@ -32,6 +32,12 @@ import ModifyEmployee from './pages/admin/Employee/ModifyEmployee'
 import AddProject from './pages/admin/Project/AddProject'
 import ViewProject from './pages/admin/Project/ViewProject'
 import ModifyProject from './pages/admin/Project/ModifyProject'
+import AddInnovation from './pages/admin/Innovation/AddInnovation'
+import ViewInnovation from './pages/admin/Innovation/ViewInnovation'
+import ModifyInnovation from './pages/admin/Innovation/ModifyInnovation'
+import AddResearch from './pages/admin/Research/AddResearch'
+import ViewResearch from './pages/admin/Research/ViewResearch'
+import ModifyResearch from './pages/admin/Research/ModifyResearch'
 
 function App() {
   return (
@@ -108,6 +114,20 @@ function App() {
                 <Route path="add" element={<AddProject />} />
                 <Route path="view" element={<ViewProject />} />
                 <Route path="modify" element={<ModifyProject />} />
+              </Route>
+
+              <Route path="innovations">
+                <Route index element={<Navigate to="/admin/innovations/add" replace />} />
+                <Route path="add" element={<AddInnovation />} />
+                <Route path="view" element={<ViewInnovation />} />
+                <Route path="modify" element={<ModifyInnovation />} />
+              </Route>
+
+              <Route path="research">
+                <Route index element={<Navigate to="/admin/research/add" replace />} />
+                <Route path="add" element={<AddResearch />} />
+                <Route path="view" element={<ViewResearch />} />
+                <Route path="modify" element={<ModifyResearch />} />
               </Route>
               
               {/* Admin Management Routes */}

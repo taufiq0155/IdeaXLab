@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { toast, Toaster } from "react-hot-toast";
+import { useLocation } from "react-router-dom";
 import {
   FiSearch,
   FiFilter,
@@ -20,6 +21,7 @@ import AnimatedCanvas from "../../../components/animations/animatedCanvas";
 import GlassCard from "../../../components/ui/GlassCard";
 
 const ViewService = () => {
+  const location = useLocation();
   const [services, setServices] = useState([]);
   const [selectedService, setSelectedService] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -35,6 +37,7 @@ const ViewService = () => {
   const [previewMimeType, setPreviewMimeType] = useState("");
   const [isPreviewLoading, setIsPreviewLoading] = useState(false);
   const previewUrlRef = useRef("");
+  const preselectServiceId = new URLSearchParams(location.search).get("serviceId") || "";
 
   const filteredServices = useMemo(() => {
     return services.filter((service) => {
@@ -129,10 +132,11 @@ const ViewService = () => {
       }
 
       const currentId = selectedService?._id;
-      const candidateId =
-        currentId && nextServices.some((item) => item._id === currentId)
-          ? currentId
-          : nextServices[0]._id;
+      const candidateId = preselectServiceId && nextServices.some((item) => item._id === preselectServiceId)
+        ? preselectServiceId
+        : currentId && nextServices.some((item) => item._id === currentId)
+        ? currentId
+        : nextServices[0]._id;
 
       await handleSelectService(candidateId);
     } catch (error) {
@@ -147,7 +151,7 @@ const ViewService = () => {
     return () => {
       revokePreviewUrl();
     };
-  }, []);
+  }, [preselectServiceId]);
 
   const loadDocumentPreview = async (serviceId, document) => {
     if (!serviceId || !document?._id) return;

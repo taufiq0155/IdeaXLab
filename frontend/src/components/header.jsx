@@ -6,9 +6,14 @@ import {
   FiSearch, 
   FiX,
   FiKey,
-  FiMenu
+  FiMenu,
+  FiMail,
+  FiBriefcase,
+  FiRefreshCw,
 } from 'react-icons/fi';
 import { useNavigate, useLocation } from 'react-router-dom';
+
+const DISMISSED_NOTIFICATIONS_KEY = "adminDismissedNotifications";
 
 export default function Header({ 
   onToggleSidebar, 
@@ -19,10 +24,15 @@ export default function Header({
   const [showSearch, setShowSearch] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [unreadContactCount, setUnreadContactCount] = useState(0);
+  const [pendingServiceCount, setPendingServiceCount] = useState(0);
+  const [isRefreshingNotifications, setIsRefreshingNotifications] = useState(false);
+  const [dismissedNotificationIds, setDismissedNotificationIds] = useState([]);
   const navigate = useNavigate();
   const location = useLocation();
   const notificationRef = useRef(null);
   const searchRef = useRef(null);
+  const notificationTimerRef = useRef(null);
 
   // Get current page title from route
   const getPageTitle = () => {
@@ -53,9 +63,180 @@ export default function Header({
     setShowSearch(false);
   };
 
+  const saveDismissedIds = (ids) => {
+    try {
+      localStorage.setItem(DISMISSED_NOTIFICATIONS_KEY, JSON.stringify(ids));
+    } catch (error) {
+      // Ignore localStorage errors and keep runtime state.
+    }
+  };
+
+  const dismissNotification = (notificationId) => {
+    if (!notificationId) return;
+
+    setDismissedNotificationIds((prev) => {
+      if (prev.includes(notificationId)) return prev;
+      const next = [...prev, notificationId].slice(-500);
+      saveDismissedIds(next);
+      return next;
+    });
+
+    setNotifications((prev) => {
+      const target = prev.find((item) => item.id === notificationId);
+      if (target?.type === "contact") {
+        setUnreadContactCount((count) => Math.max(0, count - 1));
+      } else if (target?.type === "service") {
+        setPendingServiceCount((count) => Math.max(0, count - 1));
+      }
+      return prev.filter((item) => item.id !== notificationId);
+    });
+  };
+
+  const clearAllNotifications = () => {
+    if (notifications.length === 0) return;
+
+    setDismissedNotificationIds((prev) => {
+      const currentIds = notifications.map((item) => item.id).filter(Boolean);
+      const next = Array.from(new Set([...prev, ...currentIds])).slice(-500);
+      saveDismissedIds(next);
+      return next;
+    });
+
+    setNotifications([]);
+    setUnreadContactCount(0);
+    setPendingServiceCount(0);
+  };
+
+  const fetchNotifications = async (showLoader = false) => {
+    const token = localStorage.getItem("adminToken");
+    if (!token) {
+      setNotifications([]);
+      setUnreadContactCount(0);
+      setPendingServiceCount(0);
+      return;
+    }
+
+    try {
+      if (showLoader) setIsRefreshingNotifications(true);
+
+      const [contactResponse, serviceResponse] = await Promise.all([
+        fetch("http://localhost:5000/api/contacts?limit=25&sortBy=createdAt&sortOrder=desc", {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+        fetch("http://localhost:5000/api/admin/services?status=pending", {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      ]);
+
+      const contactContentType = contactResponse.headers.get("content-type") || "";
+      const serviceContentType = serviceResponse.headers.get("content-type") || "";
+
+      const contactData = contactContentType.includes("application/json")
+        ? await contactResponse.json()
+        : { success: false };
+      const serviceData = serviceContentType.includes("application/json")
+        ? await serviceResponse.json()
+        : { success: false };
+
+      const contactMessages = contactData?.success
+        ? (contactData.messages || []).filter((item) => !item.read)
+        : [];
+      const pendingServices = serviceData?.success
+        ? (serviceData.data || []).filter((item) => item.status === "pending")
+        : [];
+
+      const contactNotifications = contactMessages.map((item) => ({
+        id: `contact-${item._id}`,
+        type: "contact",
+        icon: "mail",
+        title: "New Contact Message",
+        message: `${item.name || item.email || "Unknown"}: ${item.subject || "General Inquiry"}`,
+        time: formatRelativeTime(item.createdAt),
+        createdAt: item.createdAt ? new Date(item.createdAt).getTime() : 0,
+        path: `/admin/contacts/messages?contactId=${item._id}`,
+      }));
+
+      const serviceNotifications = pendingServices.map((item) => ({
+        id: `service-${item._id}`,
+        type: "service",
+        icon: "service",
+        title: "New Service Request",
+        message: `${item.requesterEmail || "Unknown"}: ${item.title || "Document review request"}`,
+        time: formatRelativeTime(item.createdAt),
+        createdAt: item.createdAt ? new Date(item.createdAt).getTime() : 0,
+        path: `/admin/services/view?serviceId=${item._id}`,
+      }));
+
+      const dismissedSet = new Set(dismissedNotificationIds);
+      const filteredContacts = contactNotifications.filter((item) => !dismissedSet.has(item.id));
+      const filteredServices = serviceNotifications.filter((item) => !dismissedSet.has(item.id));
+
+      const combined = [...filteredContacts, ...filteredServices]
+        .sort((a, b) => b.createdAt - a.createdAt)
+        .slice(0, 20);
+
+      setNotifications(combined);
+      setUnreadContactCount(filteredContacts.length);
+      setPendingServiceCount(filteredServices.length);
+    } catch (error) {
+      // Keep header stable on failure.
+    } finally {
+      if (showLoader) setIsRefreshingNotifications(false);
+    }
+  };
+
+  const handleNotificationNavigate = async (notification) => {
+    if (!notification?.path) return;
+
+    navigate(notification.path);
+    setShowNotifications(false);
+
+    if (notification.type === "contact") {
+      try {
+        const token = localStorage.getItem("adminToken");
+        if (token) {
+          const contactId = notification.id.replace("contact-", "");
+          await fetch(`http://localhost:5000/api/contacts/${contactId}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+        }
+      } catch (error) {
+        // Non-blocking; selection still navigates.
+      }
+      fetchNotifications(false);
+    }
+  };
+
+  const markContactNotificationsAsRead = async () => {
+    const token = localStorage.getItem("adminToken");
+    if (!token) return;
+
+    try {
+      const response = await fetch("http://localhost:5000/api/contacts/actions/mark-all-read", {
+        method: "PUT",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      const contentType = response.headers.get("content-type") || "";
+      if (contentType.includes("application/json")) {
+        await response.json();
+      }
+    } catch (error) {
+      // Ignore notification mark failures.
+    } finally {
+      fetchNotifications(false);
+    }
+  };
+
   // Menu items for search
   const menuItems = [
     { label: "Dashboard", path: "/admin/dashboard" },
+    { label: "Contacts", path: "/admin/contacts/messages" },
+    { label: "View Service", path: "/admin/services/view" },
+    { label: "Blogs", path: "/admin/blog" },
+    { label: "Projects", path: "/admin/projects/view" },
+    { label: "Innovations", path: "/admin/innovations/view" },
+    { label: "Research", path: "/admin/research/view" },
     { label: "All Admins", path: "/admin/admins/all" },
     { label: "Pending Admins", path: "/admin/admins/pending" },
     { label: "Change Password", path: "/admin/change-password" },
@@ -78,6 +259,37 @@ export default function Header({
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(DISMISSED_NOTIFICATIONS_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        setDismissedNotificationIds(parsed.filter((item) => typeof item === "string"));
+      }
+    } catch (error) {
+      // Ignore malformed storage values.
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchNotifications(true);
+
+    if (notificationTimerRef.current) {
+      clearInterval(notificationTimerRef.current);
+    }
+
+    notificationTimerRef.current = setInterval(() => {
+      fetchNotifications(false);
+    }, 60000);
+
+    return () => {
+      if (notificationTimerRef.current) {
+        clearInterval(notificationTimerRef.current);
+      }
+    };
+  }, [location.pathname, dismissedNotificationIds]);
 
   // Handle header position based on sidebar state
   const headerPosition = isSidebarOpen 
@@ -200,9 +412,19 @@ export default function Header({
                 {showNotifications && (
                   <div className="absolute right-0 mt-2 w-80 bg-gray-900/95 backdrop-blur-xl rounded-xl border border-gray-800/50 shadow-2xl overflow-hidden z-50">
                     <div className="p-4 border-b border-gray-800/50">
-                      <h3 className="text-white font-semibold">Notifications</h3>
+                      <div className="flex items-center justify-between gap-3">
+                        <h3 className="text-white font-semibold">Notifications</h3>
+                        <button
+                          type="button"
+                          onClick={() => fetchNotifications(true)}
+                          className="text-gray-400 hover:text-cyan-300 transition-colors"
+                          title="Refresh notifications"
+                        >
+                          <FiRefreshCw className={`w-4 h-4 ${isRefreshingNotifications ? "animate-spin" : ""}`} />
+                        </button>
+                      </div>
                       <p className="text-xs text-gray-400 mt-1">
-                        You have {notifications.length} unread notifications
+                        {unreadContactCount} contact + {pendingServiceCount} service notifications
                       </p>
                     </div>
                     
@@ -210,20 +432,39 @@ export default function Header({
                       {notifications.length > 0 ? (
                         notifications.map((notification, index) => (
                           <div
-                            key={index}
+                            key={notification.id || index}
                             className="p-4 border-b border-gray-800/30 hover:bg-gray-800/50 cursor-pointer"
+                            onClick={() => handleNotificationNavigate(notification)}
                           >
-                            <div className="flex items-start">
+                            <div className="flex items-start gap-3">
                               <div className="flex-shrink-0">
                                 <div className="w-8 h-8 rounded-full bg-blue-900/50 flex items-center justify-center">
-                                  <FiBell className="w-4 h-4 text-blue-400" />
+                                  {notification.icon === "mail" ? (
+                                    <FiMail className="w-4 h-4 text-cyan-300" />
+                                  ) : notification.icon === "service" ? (
+                                    <FiBriefcase className="w-4 h-4 text-blue-300" />
+                                  ) : (
+                                    <FiBell className="w-4 h-4 text-blue-400" />
+                                  )}
                                 </div>
                               </div>
-                              <div className="ml-3 flex-1">
+                              <div className="flex-1 min-w-0">
                                 <p className="text-sm text-white font-medium">{notification.title}</p>
                                 <p className="text-xs text-gray-400 mt-1">{notification.message}</p>
                                 <p className="text-xs text-gray-500 mt-2">{notification.time}</p>
                               </div>
+                              <button
+                                type="button"
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  dismissNotification(notification.id);
+                                }}
+                                className="flex-shrink-0 text-gray-500 hover:text-red-400 transition-colors"
+                                title="Delete notification"
+                                aria-label="Delete notification"
+                              >
+                                <FiX className="w-4 h-4" />
+                              </button>
                             </div>
                           </div>
                         ))
@@ -239,12 +480,18 @@ export default function Header({
                     </div>
                     
                     {notifications.length > 0 && (
-                      <div className="p-3 border-t border-gray-800/50">
-                        <button 
-                          onClick={() => setNotifications([])}
+                      <div className="p-3 border-t border-gray-800/50 space-y-2">
+                        <button
+                          onClick={clearAllNotifications}
+                          className="w-full text-center text-sm text-red-400 hover:text-red-300"
+                        >
+                          Delete all notifications
+                        </button>
+                        <button
+                          onClick={markContactNotificationsAsRead}
                           className="w-full text-center text-sm text-blue-400 hover:text-blue-300"
                         >
-                          Mark all as read
+                          Mark contact notifications as read
                         </button>
                       </div>
                     )}
@@ -308,4 +555,16 @@ export default function Header({
       <div className="h-16"></div>
     </>
   );
+}
+
+function formatRelativeTime(value) {
+  if (!value) return "Just now";
+  const timestamp = new Date(value).getTime();
+  if (!timestamp || Number.isNaN(timestamp)) return "Just now";
+
+  const seconds = Math.floor((Date.now() - timestamp) / 1000);
+  if (seconds < 60) return "Just now";
+  if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
+  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
+  return `${Math.floor(seconds / 86400)}d ago`;
 }

@@ -12,6 +12,8 @@ import profileRoutes from "./routes/admin/profileRoutes.js";
 import serviceRoutes from "./routes/admin/serviceRoutes.js";
 import employeeRoutes from "./routes/admin/employeeRoutes.js";
 import projectRoutes from "./routes/admin/projectRoutes.js";
+import innovationRoutes from "./routes/admin/innovationRoutes.js";
+import researchRoutes from "./routes/admin/researchRoutes.js";
 import publicRoutes from "./routes/public/publicRoutes.js";
 
 const app = express();
@@ -31,6 +33,8 @@ app.use("/api/admin/profile", profileRoutes);
 app.use("/api/admin/services", serviceRoutes);
 app.use("/api/admin/employees", employeeRoutes);
 app.use("/api/admin/projects", projectRoutes);
+app.use("/api/admin/innovations", innovationRoutes);
+app.use("/api/admin/research", researchRoutes);
 app.use("/api/public", publicRoutes);
 
 

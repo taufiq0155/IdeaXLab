@@ -19,7 +19,9 @@ import {
   FiPlus,          // Added for Create
   FiBriefcase,
   FiUpload,
-  FiImage
+  FiImage,
+  FiActivity,
+  FiBookOpen,
 } from 'react-icons/fi';
 import { useNavigate, useLocation } from 'react-router-dom';
 
@@ -38,6 +40,8 @@ export default function Sidebar({
   const [showServiceSubmenu, setShowServiceSubmenu] = useState(false);
   const [showEmployeeSubmenu, setShowEmployeeSubmenu] = useState(false);
   const [showProjectSubmenu, setShowProjectSubmenu] = useState(false);
+  const [showInnovationSubmenu, setShowInnovationSubmenu] = useState(false);
+  const [showResearchSubmenu, setShowResearchSubmenu] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -125,6 +129,8 @@ export default function Sidebar({
   const isServiceActive = location.pathname.includes('/admin/services');
   const isEmployeeActive = location.pathname.includes('/admin/employees');
   const isProjectActive = location.pathname.includes('/admin/projects');
+  const isInnovationActive = location.pathname.includes('/admin/innovations');
+  const isResearchActive = location.pathname.includes('/admin/research');
 
   return (
     <>
@@ -589,6 +595,192 @@ export default function Sidebar({
                     >
                       <FiEdit className="w-4 h-4" />
                       <span>Modify Project</span>
+                    </button>
+                  </motion.div>
+                )}
+              </div>
+            </li>
+
+            {/* INNOVATION MANAGEMENT */}
+            <li>
+              <div>
+                <button
+                  onClick={() => {
+                    setShowInnovationSubmenu(!showInnovationSubmenu);
+                    if (!showInnovationSubmenu) {
+                      navigate('/admin/innovations/add');
+                    }
+                  }}
+                  className={`flex items-center w-full rounded-xl transition-all duration-300 group ${
+                    isSidebarOpen ? 'px-4 py-3' : 'p-3 justify-center'
+                  } ${
+                    isInnovationActive
+                      ? 'bg-gradient-to-r from-blue-600/30 to-cyan-600/20 text-white shadow-lg shadow-blue-500/10'
+                      : 'text-gray-400 hover:text-white hover:bg-gray-800/30'
+                  }`}
+                >
+                  <div className={`flex items-center ${isSidebarOpen ? 'space-x-4' : 'justify-center'}`}>
+                    <span className={`flex items-center justify-center w-5 h-5 ${
+                      isInnovationActive
+                        ? 'text-blue-400'
+                        : 'text-gray-400 group-hover:text-blue-300'
+                    } transition-transform duration-200`}>
+                      <FiActivity />
+                    </span>
+                    {isSidebarOpen && (
+                      <span className="text-sm font-medium tracking-wide whitespace-nowrap">
+                        Innovation
+                      </span>
+                    )}
+                  </div>
+                  {isSidebarOpen && (
+                    <FiChevronDown className={`ml-auto transition-transform duration-300 ${showInnovationSubmenu ? 'rotate-180' : ''}`} />
+                  )}
+                </button>
+
+                {isSidebarOpen && showInnovationSubmenu && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="ml-12 mt-1 space-y-1"
+                  >
+                    <button
+                      onClick={() => {
+                        navigate('/admin/innovations/add');
+                        if (isMobile) setIsSidebarOpen(false);
+                      }}
+                      className={`flex items-center space-x-2 w-full px-3 py-2 rounded-lg text-sm transition-colors text-left ${
+                        location.pathname === '/admin/innovations/add'
+                          ? 'text-blue-400 bg-blue-900/20'
+                          : 'text-gray-400 hover:text-white hover:bg-gray-800/30'
+                      }`}
+                    >
+                      <FiPlus className="w-4 h-4" />
+                      <span>Add Innovation</span>
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        navigate('/admin/innovations/view');
+                        if (isMobile) setIsSidebarOpen(false);
+                      }}
+                      className={`flex items-center space-x-2 w-full px-3 py-2 rounded-lg text-sm transition-colors text-left ${
+                        location.pathname === '/admin/innovations/view'
+                          ? 'text-blue-400 bg-blue-900/20'
+                          : 'text-gray-400 hover:text-white hover:bg-gray-800/30'
+                      }`}
+                    >
+                      <FiActivity className="w-4 h-4" />
+                      <span>View Innovation</span>
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        navigate('/admin/innovations/modify');
+                        if (isMobile) setIsSidebarOpen(false);
+                      }}
+                      className={`flex items-center space-x-2 w-full px-3 py-2 rounded-lg text-sm transition-colors text-left ${
+                        location.pathname === '/admin/innovations/modify'
+                          ? 'text-blue-400 bg-blue-900/20'
+                          : 'text-gray-400 hover:text-white hover:bg-gray-800/30'
+                      }`}
+                    >
+                      <FiEdit className="w-4 h-4" />
+                      <span>Modify Innovation</span>
+                    </button>
+                  </motion.div>
+                )}
+              </div>
+            </li>
+
+            {/* RESEARCH MANAGEMENT */}
+            <li>
+              <div>
+                <button
+                  onClick={() => {
+                    setShowResearchSubmenu(!showResearchSubmenu);
+                    if (!showResearchSubmenu) {
+                      navigate('/admin/research/add');
+                    }
+                  }}
+                  className={`flex items-center w-full rounded-xl transition-all duration-300 group ${
+                    isSidebarOpen ? 'px-4 py-3' : 'p-3 justify-center'
+                  } ${
+                    isResearchActive
+                      ? 'bg-gradient-to-r from-blue-600/30 to-cyan-600/20 text-white shadow-lg shadow-blue-500/10'
+                      : 'text-gray-400 hover:text-white hover:bg-gray-800/30'
+                  }`}
+                >
+                  <div className={`flex items-center ${isSidebarOpen ? 'space-x-4' : 'justify-center'}`}>
+                    <span className={`flex items-center justify-center w-5 h-5 ${
+                      isResearchActive
+                        ? 'text-blue-400'
+                        : 'text-gray-400 group-hover:text-blue-300'
+                    } transition-transform duration-200`}>
+                      <FiBookOpen />
+                    </span>
+                    {isSidebarOpen && (
+                      <span className="text-sm font-medium tracking-wide whitespace-nowrap">
+                        Research
+                      </span>
+                    )}
+                  </div>
+                  {isSidebarOpen && (
+                    <FiChevronDown className={`ml-auto transition-transform duration-300 ${showResearchSubmenu ? 'rotate-180' : ''}`} />
+                  )}
+                </button>
+
+                {isSidebarOpen && showResearchSubmenu && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="ml-12 mt-1 space-y-1"
+                  >
+                    <button
+                      onClick={() => {
+                        navigate('/admin/research/add');
+                        if (isMobile) setIsSidebarOpen(false);
+                      }}
+                      className={`flex items-center space-x-2 w-full px-3 py-2 rounded-lg text-sm transition-colors text-left ${
+                        location.pathname === '/admin/research/add'
+                          ? 'text-blue-400 bg-blue-900/20'
+                          : 'text-gray-400 hover:text-white hover:bg-gray-800/30'
+                      }`}
+                    >
+                      <FiPlus className="w-4 h-4" />
+                      <span>Add Research</span>
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        navigate('/admin/research/view');
+                        if (isMobile) setIsSidebarOpen(false);
+                      }}
+                      className={`flex items-center space-x-2 w-full px-3 py-2 rounded-lg text-sm transition-colors text-left ${
+                        location.pathname === '/admin/research/view'
+                          ? 'text-blue-400 bg-blue-900/20'
+                          : 'text-gray-400 hover:text-white hover:bg-gray-800/30'
+                      }`}
+                    >
+                      <FiBookOpen className="w-4 h-4" />
+                      <span>View Research</span>
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        navigate('/admin/research/modify');
+                        if (isMobile) setIsSidebarOpen(false);
+                      }}
+                      className={`flex items-center space-x-2 w-full px-3 py-2 rounded-lg text-sm transition-colors text-left ${
+                        location.pathname === '/admin/research/modify'
+                          ? 'text-blue-400 bg-blue-900/20'
+                          : 'text-gray-400 hover:text-white hover:bg-gray-800/30'
+                      }`}
+                    >
+                      <FiEdit className="w-4 h-4" />
+                      <span>Modify Research</span>
                     </button>
                   </motion.div>
                 )}
